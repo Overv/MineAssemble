@@ -11,6 +11,11 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_video.h>
 
+// Configuration
+#define worldSX 16
+#define worldSY 16
+#define worldSZ 16
+
 // Macros
 #define IN_WORLD(x, y, z) \
     (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && worldSZ)
@@ -30,7 +35,7 @@ void initVideo();
 void mainLoop();
 
 void initWorld();
-void cleanupWorld();
+bool isLit(int x, int y, int z);
 Uint8 getBlock(int x, int y, int z);
 void setBlock(int x, int y, int z, Uint8 type);
 
@@ -44,11 +49,8 @@ Uint32 rgb(Uint8 r, Uint8 g, Uint8 b);
 // Globals
 SDL_Surface* screen;
 
-Uint8* world;
-
-const int worldSX = 16;
-const int worldSY = 16;
-const int worldSZ = 16;
+Uint8 world[worldSX * worldSY * worldSZ] = {0};
+Uint8 lighting[worldSX * worldSY] = {0};
 
 vec3 playerPos = {8, 10, 8};
 
@@ -67,8 +69,6 @@ int main() {
     initWorld();
 
     mainLoop();
-
-    cleanupWorld();
 
     return EXIT_SUCCESS;
 }
@@ -114,27 +114,22 @@ void mainLoop() {
 }
 
 //
-// Code below this line is restricted to 150 statements
+// Code below this line is not part of boilerplate
 //
 
 void initWorld() {
-    world = malloc(sizeof(Uint8) * worldSX * worldSY * worldSZ);
-
-    Uint8* block = world;
-
     // Make flat grass landscape
     for (int x = 0; x < worldSX; x++) {
         for (int y = 0; y < worldSY; y++) {
             for (int z = 0; z < worldSZ; z++) {
-                *block = y >= worldSY / 2 ? BLOCK_AIR : BLOCK_DIRT;
-                block++;
+                setBlock(x, y, z, y >= worldSY / 2 ? BLOCK_AIR : BLOCK_DIRT);
             }
         }
     }
 
     // Add arch
-    setBlock(11, 8, 4, BLOCK_DIRT);
-    setBlock(11, 9, 4, BLOCK_DIRT);
+    //setBlock(11, 8, 4, BLOCK_DIRT);
+    //setBlock(11, 9, 4, BLOCK_DIRT);
     setBlock(11, 10, 4, BLOCK_DIRT);
     setBlock(10, 10, 4, BLOCK_DIRT);
     setBlock(9, 10, 4, BLOCK_DIRT);
@@ -142,8 +137,8 @@ void initWorld() {
     setBlock(9, 8, 4, BLOCK_DIRT);
 }
 
-void cleanupWorld() {
-    free(world);
+bool isLit(int x, int y, int z) {
+    return lighting[x * worldSZ + z] <= y;
 }
 
 Uint8 getBlock(int x, int y, int z) {
@@ -152,6 +147,21 @@ Uint8 getBlock(int x, int y, int z) {
 
 void setBlock(int x, int y, int z, Uint8 type) {
     world[x * worldSY * worldSZ + y * worldSZ + z] = type;
+
+    // Update lightmap
+    int lightIdx = x * worldSZ + z;
+
+    if (type != BLOCK_AIR && lighting[lightIdx] < y) {
+        lighting[lightIdx] = y;
+    } else if (type == BLOCK_AIR && lighting[lightIdx] < y) {
+        y = worldSY - 1;
+
+        while (y > 0 && getBlock(x, y, z) == BLOCK_AIR) {
+            y--;
+        }
+
+        lighting[lightIdx] = y;
+    }
 }
 
 void drawFrame(Uint32* pixels) {
@@ -200,7 +210,11 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
     while (IN_WORLD(x, y, z)) {
         // Determine if block is solid
         if (getBlock(x, y, z) != BLOCK_AIR) {
-            return rgb(x * 16, y * 16, z * 16);
+            if (isLit(x, y, z)) {
+                return rgb(x * 16, y * 16, z * 16);
+            } else {
+                return rgb(x * 8, y * 8, z * 8);
+            }
         }
 
         // Remaining distance inside this block given ray direction
