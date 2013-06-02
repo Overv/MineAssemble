@@ -11,14 +11,29 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_video.h>
 
+// Macros
+#define IN_WORLD(x, y, z) \
+    (x > 0 && y > 0 && z > 0 && x < worldSX && y < worldSY && worldSZ)
+
 // Types
 typedef struct vec3 {
     float x, y, z;
 } vec3;
 
+enum block_t {
+    BLOCK_AIR,
+    BLOCK_DIRT
+};
+
 // Functions
 void initVideo();
 void mainLoop();
+
+void initWorld();
+void cleanupWorld();
+Uint8 getBlock(int x, int y, int z);
+void setBlock(int x, int y, int z, Uint8 type);
+
 void drawFrame(Uint32* pixels);
 
 void setView(float yaw, float pitch);
@@ -29,7 +44,13 @@ Uint32 rgb(Uint8 r, Uint8 g, Uint8 b);
 // Globals
 SDL_Surface* screen;
 
-vec3 playerPos = {0, 0, 0};
+Uint8* world;
+
+const int worldSX = 16;
+const int worldSY = 16;
+const int worldSZ = 16;
+
+vec3 playerPos = {8, 10, 8};
 
 // The sine and cosine are the same for all pixels
 float pitch = 0.0f;
@@ -41,13 +62,13 @@ float yawC = 1.0f;
 float yawS = 0.0f;
 
 int main() {
-    vec3 pos = {0.2f, 0.2f, 0.2f};
-    vec3 dir = {0.2f, 0.4f, 0.0f};
-    raytrace(pos, dir);
-
     initVideo();
 
+    initWorld();
+
     mainLoop();
+
+    cleanupWorld();
 
     return EXIT_SUCCESS;
 }
@@ -96,6 +117,33 @@ void mainLoop() {
 // Code below this line is restricted to 150 statements
 //
 
+void initWorld() {
+    world = malloc(sizeof(Uint8) * worldSX * worldSY * worldSZ);
+
+    Uint8* block = world;
+
+    for (int x = 0; x < worldSX; x++) {
+        for (int y = 0; y < worldSY; y++) {
+            for (int z = 0; z < worldSZ; z++) {
+                *block = y >= worldSY / 2 ? BLOCK_AIR : BLOCK_DIRT;
+                block++;
+            }
+        }
+    }
+}
+
+void cleanupWorld() {
+    free(world);
+}
+
+Uint8 getBlock(int x, int y, int z) {
+    return world[x * worldSY * worldSZ + y * worldSZ + z];
+}
+
+void setBlock(int x, int y, int z, Uint8 type) {
+    world[x * worldSY * worldSZ + y * worldSZ + z] = type;
+}
+
 void drawFrame(Uint32* pixels) {
     float x = 0;
     float y = 0;
@@ -103,8 +151,7 @@ void drawFrame(Uint32* pixels) {
     setView(0.0f, 0.0f);
 
     for (int i = 0; i < 320 * 200; i++) {
-        //*(pixels + i) = raytrace(playerPos, rayDir(x, y));
-        *pixels = rgb(255, 0, 0);
+        *pixels = raytrace(playerPos, rayDir(x, y));
 
         pixels++;
         x++;
@@ -125,6 +172,7 @@ void setView(float p, float y) {
     yawC = cosf(yaw);
 }
 
+// Returns final color (xyz as rgb in case of hit, black otherwise)
 Uint32 raytrace(vec3 pos, vec3 dir) {
     int x = (int) pos.x;
     int y = (int) pos.y;
@@ -137,21 +185,25 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
     float dx_off = dir.x >= 0.0f ? 1.0f : 0.0f;
     float dy_off = dir.y >= 0.0f ? 1.0f : 0.0f;
     float dz_off = dir.z >= 0.0f ? 1.0f : 0.0f;
-
-    // TEMP
-    int n = 10;
     
-    for (int i = 0; i < n; i++) {
+    // Assumption is made that the camera is never outside the world
+    while (IN_WORLD(x, y, z)) {
+        // Determine if block is solid
+        if (getBlock(x, y, z) != BLOCK_AIR) {
+            return rgb(x * 16, y * 16, z * 16);
+        }
+
+        // Remaining distance inside this block given ray direction
         float dx = x - pos.x + dx_off;
         float dy = y - pos.y + dy_off;
         float dz = z - pos.z + dz_off;
         
+        // Calculate distance for each dimension
         float t1 = dx / dir.x;
         float t2 = dy / dir.y;
         float t3 = dz / dir.z;
-
-        printf("%d, %d, %d\n", x, y, z);
         
+        // Find closest hit
         if (t1 <= t2 && t1 <= t3) {
             pos.x += dx;
             pos.y += t1 * dir.y;
@@ -172,9 +224,7 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
         }
     }
 
-    printf("%d, %d, %d\n", x, y, z);
-
-    return rgb(255, 0, 0);
+    return rgb(0, 0, 0);
 }
 
 vec3 rayDir(int x, int y) {
