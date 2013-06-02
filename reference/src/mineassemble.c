@@ -22,7 +22,8 @@ void mainLoop();
 void drawFrame(Uint32* pixels);
 
 void setView(float yaw, float pitch);
-void rayDir(int x, int y, vec3* n);
+Uint32 raytrace(vec3 pos, vec3 dir);
+vec3 rayDir(int x, int y);
 Uint32 rgb(Uint8 r, Uint8 g, Uint8 b);
 
 // Globals
@@ -40,6 +41,10 @@ float yawC = 1.0f;
 float yawS = 0.0f;
 
 int main() {
+    vec3 pos = {0.2f, 0.2f, 0.2f};
+    vec3 dir = {0.2f, 0.4f, 0.0f};
+    raytrace(pos, dir);
+
     initVideo();
 
     mainLoop();
@@ -98,14 +103,10 @@ void drawFrame(Uint32* pixels) {
     setView(0.0f, 0.0f);
 
     for (int i = 0; i < 320 * 200; i++) {
-        vec3 dir;
-        rayDir(x, y, &dir);
+        //*(pixels + i) = raytrace(playerPos, rayDir(x, y));
+        *pixels = rgb(255, 0, 0);
 
-        *(pixels + i) =
-            rgb(fabs(dir.x * 255.0f),
-                fabs(dir.y * 255.0f),
-                fabs(dir.z * 255.0f));
-
+        pixels++;
         x++;
         if (x == 320) {
             x = 0;
@@ -124,22 +125,78 @@ void setView(float p, float y) {
     yawC = cosf(yaw);
 }
 
-void rayDir(int x, int y, vec3* n) {
+Uint32 raytrace(vec3 pos, vec3 dir) {
+    int x = (int) pos.x;
+    int y = (int) pos.y;
+    int z = (int) pos.z;
+
+    int x_dir = dir.x >= 0.0f ? 1 : -1;
+    int y_dir = dir.y >= 0.0f ? 1 : -1;
+    int z_dir = dir.z >= 0.0f ? 1 : -1;
+
+    float dx_off = dir.x >= 0.0f ? 1.0f : 0.0f;
+    float dy_off = dir.y >= 0.0f ? 1.0f : 0.0f;
+    float dz_off = dir.z >= 0.0f ? 1.0f : 0.0f;
+
+    // TEMP
+    int n = 10;
+    
+    for (int i = 0; i < n; i++) {
+        float dx = x - pos.x + dx_off;
+        float dy = y - pos.y + dy_off;
+        float dz = z - pos.z + dz_off;
+        
+        float t1 = dx / dir.x;
+        float t2 = dy / dir.y;
+        float t3 = dz / dir.z;
+
+        printf("%d, %d, %d\n", x, y, z);
+        
+        if (t1 <= t2 && t1 <= t3) {
+            pos.x += dx;
+            pos.y += t1 * dir.y;
+            pos.z += t1 * dir.z;
+            x += x_dir;
+        }
+        if (t2 <= t1 && t2 <= t3) {
+            pos.x += t2 * dir.x;
+            pos.y += dy;
+            pos.z += t2 * dir.z;
+            y += y_dir;
+        }
+        if (t3 <= t1 && t3 <= t2) {
+            pos.x += t3 * dir.x;
+            pos.y += t3 * dir.y;
+            pos.z += dz;
+            z += z_dir;
+        }
+    }
+
+    printf("%d, %d, %d\n", x, y, z);
+
+    return rgb(255, 0, 0);
+}
+
+vec3 rayDir(int x, int y) {
+    vec3 d;
+
     // This is simply a precomputed version of the actual linear
     // transformation, which is the inverse of the common view and
     // projection transformation used in rasterization.
     float clipX = x / 160.0f - 1.0f;
     float clipY = 1.0f - y / 100.0f;
 
-    n->x = 1.6f * yawC * clipX + yawS * pitchS * clipY - pitchC * yawS;
-    n->y = pitchC * clipY + pitchS;
-    n->z = -1.6f * yawS * clipX + yawC * pitchS * clipY - pitchC * yawC;
+    d.x = 1.6f * yawC * clipX + yawS * pitchS * clipY - pitchC * yawS;
+    d.y = pitchC * clipY + pitchS;
+    d.z = -1.6f * yawS * clipX + yawC * pitchS * clipY - pitchC * yawC;
 
     // Normalize
-    float length = sqrtf(n->x * n->x + n->y * n->y + n->z * n->z);
-    n->x /= length;
-    n->y /= length;
-    n->z /= length;
+    float length = sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
+    d.x /= length;
+    d.y /= length;
+    d.z /= length;
+
+    return d;
 }
 
 Uint32 rgb(Uint8 r, Uint8 g, Uint8 b) {
