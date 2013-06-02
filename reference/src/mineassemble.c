@@ -13,7 +13,7 @@
 
 // Macros
 #define IN_WORLD(x, y, z) \
-    (x > 0 && y > 0 && z > 0 && x < worldSX && y < worldSY && worldSZ)
+    (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && worldSZ)
 
 // Types
 typedef struct vec3 {
@@ -122,6 +122,7 @@ void initWorld() {
 
     Uint8* block = world;
 
+    // Make flat grass landscape
     for (int x = 0; x < worldSX; x++) {
         for (int y = 0; y < worldSY; y++) {
             for (int z = 0; z < worldSZ; z++) {
@@ -130,6 +131,15 @@ void initWorld() {
             }
         }
     }
+
+    // Add arch
+    setBlock(11, 8, 4, BLOCK_DIRT);
+    setBlock(11, 9, 4, BLOCK_DIRT);
+    setBlock(11, 10, 4, BLOCK_DIRT);
+    setBlock(10, 10, 4, BLOCK_DIRT);
+    setBlock(9, 10, 4, BLOCK_DIRT);
+    setBlock(9, 9, 4, BLOCK_DIRT);
+    setBlock(9, 8, 4, BLOCK_DIRT);
 }
 
 void cleanupWorld() {
