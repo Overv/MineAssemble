@@ -17,8 +17,10 @@ created the reference code that I would essentially port to assembly after that.
 
 I started writing the reference code with the idea that if it was longer than
 150 statements (excluding boilerplate), it wouldn't be worth doing it in
-assembly. Since this was originally part of a uni assignment, I also had only
-about 1 week to finish it.
+assembly. Like all estimates in the world of programming, this limit turned out
+to be a gross underestimate, reaching about 134 lines before adding the texture
+code. Nevertheless, since this was originally part of a uni assignment, I still
+had a time limit of only about 1 week.
 
 How does it work?
 -----------------
