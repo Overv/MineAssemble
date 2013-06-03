@@ -101,7 +101,7 @@ void mainLoop() {
     char titleBuf[64];
 
     while (true) {
-        if (SDL_PollEvent(&windowEvent)) {
+        while (SDL_PollEvent(&windowEvent)) {
             if (windowEvent.type == SDL_QUIT) return;
         }
 
@@ -271,11 +271,14 @@ Uint32 rayColor(int x, int y, int z, int face) {
     int nx, ny, nz;
     faceNormal(face, &nx, &ny, &nz);
 
-    // Side is lit if there are no higher blocks in the column faced by it
-    if (!IN_WORLD(x + nx, y, z + nz) || getLight(x + nx, z + nz) <= y) {
-        return rgb(abs(nx) * 255, abs(ny) * 255, abs(nz) * 255);
-    } else {
+    // Side is dark if there are higher blocks in the column faced by it
+    // Left and back sides are always dark to simulate a sun angle
+    if (IN_WORLD(x + nx, y, z + nz) && getLight(x + nx, z + nz) > y) {
         return rgb(abs(nx) * 200, abs(ny) * 200, abs(nz) * 200);
+    } else if (face == FACE_LEFT || face == FACE_BACK) {
+        return rgb(abs(nx) * 200, abs(ny) * 200, abs(nz) * 200);
+    } else {
+        return rgb(abs(nx) * 255, abs(ny) * 255, abs(nz) * 255);
     }
 }
 
