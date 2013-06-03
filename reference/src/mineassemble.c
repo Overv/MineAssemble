@@ -30,12 +30,21 @@ enum block_t {
     BLOCK_DIRT
 };
 
+enum face_t {
+    FACE_LEFT,
+    FACE_RIGHT,
+    FACE_BOTTOM,
+    FACE_TOP,
+    FACE_BACK,
+    FACE_FRONT
+};
+
 // Functions
 void initVideo();
 void mainLoop();
 
 void initWorld();
-bool isLit(int x, int y, int z);
+int getLight(int x, int z);
 Uint8 getBlock(int x, int y, int z);
 void setBlock(int x, int y, int z, Uint8 type);
 
@@ -43,6 +52,8 @@ void drawFrame(Uint32* pixels);
 
 void setView(float yaw, float pitch);
 Uint32 raytrace(vec3 pos, vec3 dir);
+Uint32 rayColor(int x, int y, int z, int face);
+void faceNormal(int face, int* x, int* y, int* z);
 vec3 rayDir(int x, int y);
 Uint32 rgb(Uint8 r, Uint8 g, Uint8 b);
 
@@ -137,8 +148,8 @@ void initWorld() {
     setBlock(9, 8, 4, BLOCK_DIRT);
 }
 
-bool isLit(int x, int y, int z) {
-    return lighting[x * worldSZ + z] <= y;
+int getLight(int x, int z) {
+    return lighting[x * worldSZ + z];
 }
 
 Uint8 getBlock(int x, int y, int z) {
@@ -192,7 +203,7 @@ void setView(float p, float y) {
     yawC = cosf(yaw);
 }
 
-// Returns final color (xyz as rgb in case of hit, black otherwise)
+// Returns final color
 Uint32 raytrace(vec3 pos, vec3 dir) {
     int x = (int) pos.x;
     int y = (int) pos.y;
@@ -202,19 +213,21 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
     int y_dir = dir.y >= 0.0f ? 1 : -1;
     int z_dir = dir.z >= 0.0f ? 1 : -1;
 
-    float dx_off = dir.x >= 0.0f ? 1.0f : 0.0f;
-    float dy_off = dir.y >= 0.0f ? 1.0f : 0.0f;
-    float dz_off = dir.z >= 0.0f ? 1.0f : 0.0f;
+    float dx_off = x_dir > 0 ? 1.0f : 0.0f;
+    float dy_off = y_dir > 0 ? 1.0f : 0.0f;
+    float dz_off = z_dir > 0 ? 1.0f : 0.0f;
+
+    int x_face = x_dir > 0 ? FACE_LEFT : FACE_RIGHT;
+    int y_face = y_dir > 0 ? FACE_BOTTOM : FACE_TOP;
+    int z_face = z_dir > 0 ? FACE_BACK : FACE_FRONT;
+
+    int face = FACE_TOP;
     
     // Assumption is made that the camera is never outside the world
     while (IN_WORLD(x, y, z)) {
         // Determine if block is solid
         if (getBlock(x, y, z) != BLOCK_AIR) {
-            if (isLit(x, y, z)) {
-                return rgb(x * 16, y * 16, z * 16);
-            } else {
-                return rgb(x * 8, y * 8, z * 8);
-            }
+            return rayColor(x, y, z, face);
         }
 
         // Remaining distance inside this block given ray direction
@@ -233,22 +246,52 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
             pos.y += t1 * dir.y;
             pos.z += t1 * dir.z;
             x += x_dir;
+            face = x_face;
         }
         if (t2 <= t1 && t2 <= t3) {
             pos.x += t2 * dir.x;
             pos.y += dy;
             pos.z += t2 * dir.z;
             y += y_dir;
+            face = y_face;
         }
         if (t3 <= t1 && t3 <= t2) {
             pos.x += t3 * dir.x;
             pos.y += t3 * dir.y;
             pos.z += dz;
             z += z_dir;
+            face = z_face;
         }
     }
 
     return rgb(0, 0, 0);
+}
+
+Uint32 rayColor(int x, int y, int z, int face) {
+    int nx, ny, nz;
+    faceNormal(face, &nx, &ny, &nz);
+
+    // Side is lit if there are no higher blocks in the column faced by it
+    if (!IN_WORLD(x + nx, y, z + nz) || getLight(x + nx, z + nz) <= y) {
+        return rgb(abs(nx) * 255, abs(ny) * 255, abs(nz) * 255);
+    } else {
+        return rgb(abs(nx) * 200, abs(ny) * 200, abs(nz) * 200);
+    }
+}
+
+void faceNormal(int face, int* x, int* y, int* z) {
+    *x = 0;
+    *y = 0;
+    *z = 0;
+
+    switch (face) {
+        case FACE_LEFT: *x = -1; break;
+        case FACE_RIGHT: *x = 1; break;
+        case FACE_BOTTOM: *y = -1; break;
+        case FACE_TOP: *y = 1; break;
+        case FACE_BACK: *z = -1; break;
+        case FACE_FRONT: *z = 1; break;
+    }
 }
 
 vec3 rayDir(int x, int y) {
