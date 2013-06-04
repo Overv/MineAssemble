@@ -43,9 +43,15 @@ extern unsigned int texDirt[];
 extern unsigned int texGrassSide[];
 
 // Types
-typedef struct vec3 {
+typedef struct vec3_t {
     float x, y, z;
 } vec3;
+
+typedef struct hit_t {
+    bool hit;
+    int x, y, z;
+    int nx, ny, nz;
+} hit;
 
 enum block_t {
     BLOCK_AIR,
@@ -76,7 +82,7 @@ void drawFrame(Uint32* pixels);
 
 void setPos(float x, float y, float z);
 void setView(float yaw, float pitch);
-Uint32 raytrace(vec3 pos, vec3 dir);
+Uint32 raytrace(vec3 pos, vec3 dir, hit* info);
 Uint32 rayColor(int x, int y, int z, int tex, int face);
 void faceNormal(int face, int* x, int* y, int* z);
 int texIndex(vec3 pos, int face);
@@ -197,7 +203,7 @@ void initWorld() {
     setBlock(9, 12, 4, BLOCK_DIRT);
 
     // Initial player position
-    setPos(8.0f, 10.0f, 8.0f);
+    setPos(8.0f, 9.8f, 8.0f);
     setView(0.0f, -0.35f);
 }
 
@@ -217,7 +223,7 @@ void setBlock(int x, int y, int z, Uint8 type) {
 
     if (type != BLOCK_AIR && lighting[lightIdx] < y) {
         lighting[lightIdx] = y;
-    } else if (type == BLOCK_AIR && lighting[lightIdx] < y) {
+    } else if (type == BLOCK_AIR && lighting[lightIdx] <= y) {
         y = worldSY - 1;
 
         while (y > 0 && getBlock(x, y, z) == BLOCK_AIR) {
@@ -229,12 +235,42 @@ void setBlock(int x, int y, int z, Uint8 type) {
 }
 
 void handleInput(SDLKey key, bool down) {
+    hit info;
+
     switch (key) {
         case SDLK_UP: dPitch += down ? 1.0f : -1.0f; break;
         case SDLK_DOWN: dPitch += down ? -1.0f : 1.0f; break;
 
         case SDLK_LEFT: dYaw += down ? 1.0f : -1.0f; break;
         case SDLK_RIGHT: dYaw += down ? -1.0f : 1.0f; break;
+
+        // Check if a block was hit and place a new block next to it
+        case SDLK_q:
+            if (!down) {
+                raytrace(playerPos, rayDir(160, 100), &info);
+
+                if (info.hit) {
+                    int bx = info.x + info.nx;
+                    int by = info.y + info.ny;
+                    int bz = info.z + info.nz;
+
+                    if (IN_WORLD(bx, by, bz)) {
+                        setBlock(bx, by, bz, BLOCK_DIRT);
+                    }
+                }
+            }
+            break;
+
+        // Check if a block was hit and remove it
+        case SDLK_e:
+            if (!down) {
+                raytrace(playerPos, rayDir(160, 100), &info);
+
+                if (info.hit) {
+                    setBlock(info.x, info.y, info.z, BLOCK_AIR);
+                }
+            }
+            break;
 
         default: break;
     }
@@ -254,7 +290,7 @@ void drawFrame(Uint32* pixels) {
     // Draw world
     Uint32* pixel = pixels;
     for (int i = 0; i < 320 * 200; i++) {
-        *pixel = raytrace(playerPos, rayDir(x, y));
+        *pixel = raytrace(playerPos, rayDir(x, y), NULL);
 
         pixel++;
         x++;
@@ -294,7 +330,7 @@ void setView(float p, float y) {
 }
 
 // Returns final color
-Uint32 raytrace(vec3 pos, vec3 dir) {
+Uint32 raytrace(vec3 pos, vec3 dir, hit* info) {
     int x = (int) pos.x;
     int y = (int) pos.y;
     int z = (int) pos.z;
@@ -320,6 +356,22 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
             pos.x -= x;
             pos.y -= y;
             pos.z -= z;
+
+            // If hit info is requested, no color computation is done
+            if (info != NULL) {
+                int nx, ny, nz;
+                faceNormal(face, &nx, &ny, &nz);
+
+                info->hit = true;
+                info->x = x;
+                info->y = y;
+                info->z = z;
+                info->nx = nx;
+                info->ny = ny;
+                info->nz = nz;
+
+                return 0;
+            }
 
             int tex = texIndex(pos, face);
 
@@ -358,6 +410,10 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
             z += z_dir;
             face = z_face;
         }
+    }
+
+    if (info != NULL) {
+        info->hit = false;
     }
 
     return skyColor;
