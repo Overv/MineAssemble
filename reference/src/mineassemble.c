@@ -16,16 +16,24 @@
 #define worldSY 16
 #define worldSZ 16
 
-#define skyColor rgb(158, 207, 255)
+#define skyColor RGB(158, 207, 255)
 
 // Macros
 #define IN_WORLD(x, y, z) \
     (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && worldSZ)
 
+#define RGB(r, g, b) ((0xff << 24) | ((r) << 16) | ((g) << 8) | (b))
+
+#define RED(col) (((col) & 0xff0000) >> 16)
+#define GREEN(col) (((col) & 0x00ff00) >> 8)
+#define BLUE(col) ((col) & 0x0000ff)
+
+#define INV_COLOR(col) RGB(255 - RED(col), 255 - GREEN(col), 255 - BLUE(col))
+
 #define UNLIT_COL(col) (UNLIT_RED(col) | UNLIT_GREEN(col) | UNLIT_BLUE(col))
-#define UNLIT_RED(col) ((((col & 0xff0000) >> 16) * 2 / 3) << 16)
-#define UNLIT_GREEN(col) ((((col & 0x00ff00) >> 8) * 2 / 3) << 8)
-#define UNLIT_BLUE(col) ((col & 0x0000ff) * 2 / 3)
+#define UNLIT_RED(col) ((RED(col) * 2 / 3) << 16)
+#define UNLIT_GREEN(col) ((GREEN(col) * 2 / 3) << 8)
+#define UNLIT_BLUE(col) (BLUE(col) * 2 / 3)
 
 // Resources
 extern unsigned int texGrass[];
@@ -69,7 +77,6 @@ Uint32 rayColor(int x, int y, int z, int tex, int face);
 void faceNormal(int face, int* x, int* y, int* z);
 int texIndex(vec3 pos, int face);
 vec3 rayDir(int x, int y);
-Uint32 rgb(Uint8 r, Uint8 g, Uint8 b);
 
 // Globals
 SDL_Surface* screen;
@@ -191,21 +198,35 @@ void setBlock(int x, int y, int z, Uint8 type) {
 }
 
 void drawFrame(Uint32* pixels) {
-    float x = 0;
-    float y = 0;
+    int x = 0;
+    int y = 0;
 
     setPos(8.0f, 10.0f, 8.0f);
-    setView(0.0f, 0.0f);
+    setView(0.0f, -0.35f);
 
+    // Draw world
+    Uint32* pixel = pixels;
     for (int i = 0; i < 320 * 200; i++) {
-        *pixels = raytrace(playerPos, rayDir(x, y));
+        *pixel = raytrace(playerPos, rayDir(x, y));
 
-        pixels++;
+        pixel++;
         x++;
         if (x == 320) {
             x = 0;
             y++;
         }
+    }
+
+    // Inverse colors in the center of screen to form an aim reticle
+    for (x = 155; x < 165; x++) {
+        pixels[99 * 320 + x] = INV_COLOR(pixels[99 * 320 + x]);
+        pixels[100 * 320 + x] = INV_COLOR(pixels[100 * 320 + x]);
+    }
+    for (y = 95; y < 105; y++) {
+        if (y == 99 || y == 100) continue;
+
+        pixels[y * 320 + 159] = INV_COLOR(pixels[y * 320 + 159]);
+        pixels[y * 320 + 160] = INV_COLOR(pixels[y * 320 + 160]);
     }
 }
 
@@ -377,8 +398,4 @@ vec3 rayDir(int x, int y) {
     d.z /= length;
 
     return d;
-}
-
-Uint32 rgb(Uint8 r, Uint8 g, Uint8 b) {
-    return (0xff << 24) | (r << 16) | (g << 8) | b;
 }
