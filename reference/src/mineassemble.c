@@ -22,7 +22,7 @@
 
 // Macros
 #define IN_WORLD(x, y, z) \
-    (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && worldSZ)
+    (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && z < worldSZ)
 
 #define RGB(r, g, b) ((0xff << 24) | ((r) << 16) | ((g) << 8) | (b))
 
