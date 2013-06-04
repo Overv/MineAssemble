@@ -535,7 +535,7 @@ Uint32 rayColor(int x, int y, int z, int tex, int face) {
     // Left and back sides are always dark to simulate a sun angle
     if (IN_WORLD(x + nx, y, z + nz) && getLight(x + nx, z + nz) > y) {
         return UNLIT_COL(texColor);
-    } else if (face == FACE_LEFT || face == FACE_BACK) {
+    } else if (face == FACE_BOTTOM || face == FACE_LEFT || face == FACE_BACK) {
         return UNLIT_COL(texColor);
     } else {
         return texColor;
