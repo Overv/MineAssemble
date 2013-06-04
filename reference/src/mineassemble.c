@@ -16,6 +16,8 @@
 #define worldSY 16
 #define worldSZ 16
 
+#define skyColor rgb(158, 207, 255)
+
 // Macros
 #define IN_WORLD(x, y, z) \
     (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && worldSZ)
@@ -290,7 +292,7 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
         }
     }
 
-    return rgb(0, 0, 0);
+    return skyColor;
 }
 
 Uint32 rayColor(int x, int y, int z, int tex, int face) {
