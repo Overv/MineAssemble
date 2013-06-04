@@ -18,6 +18,8 @@
 
 #define skyColor RGB(158, 207, 255)
 
+#define hFov 90
+
 // Macros
 #define IN_WORLD(x, y, z) \
     (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && worldSZ)
@@ -321,7 +323,7 @@ void setPos(float x, float y, float z) {
 
 void setView(float p, float y) {
     pitch = p;
-    
+
     if (pitch > 1.57f) pitch = 1.57f;
     else if (pitch < -1.57f) pitch = -1.57f;
 
@@ -486,7 +488,13 @@ int texIndex(vec3 pos, int face) {
 }
 
 vec3 rayDir(int x, int y) {
-    vec3 d;
+    static float vFov = -1, fov;
+
+    // Calculate vertical fov and fov constant from specified horizontal fov
+    if (vFov == -1) {
+        vFov = 2.0f * atan(tan(hFov / 720.0f * M_PI) * 320.0f / 200.0f);
+        fov = tan(0.5f * vFov);
+    }
 
     // This is simply a precomputed version of the actual linear
     // transformation, which is the inverse of the common view and
@@ -494,9 +502,11 @@ vec3 rayDir(int x, int y) {
     float clipX = x / 160.0f - 1.0f;
     float clipY = 1.0f - y / 100.0f;
 
-    d.x = 1.6f * yawC * clipX + yawS * pitchS * clipY - pitchC * yawS;
-    d.y = pitchC * clipY + pitchS;
-    d.z = -1.6f * yawS * clipX + yawC * pitchS * clipY - pitchC * yawC;
+    vec3 d = {
+        1.6f * fov * yawC * clipX + fov * yawS * pitchS * clipY - pitchC * yawS,
+        fov * pitchC * clipY + pitchS,
+        -1.6f * fov * yawS * clipX + fov * yawC * pitchS * clipY - pitchC * yawC
+    };
 
     // Normalize
     float length = sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
