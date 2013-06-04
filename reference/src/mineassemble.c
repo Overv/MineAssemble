@@ -53,6 +53,7 @@ typedef struct hit_t {
     bool hit;
     int x, y, z;
     int nx, ny, nz;
+    float dist;
 } hit;
 
 enum block_t {
@@ -80,6 +81,7 @@ void setBlock(int x, int y, int z, Uint8 type);
 
 void handleInput(SDLKey key, bool down);
 void update(float dt);
+void handleCollision(vec3 pos, vec3* velocity);
 void drawFrame(Uint32* pixels);
 
 void setPos(float x, float y, float z);
@@ -260,6 +262,12 @@ void handleInput(SDLKey key, bool down) {
         case SDLK_s: keyS = down; break;
         case SDLK_d: keyD = down; break;
 
+        case SDLK_SPACE:
+            if (down) {
+                velocity.y += 8.0f;
+            }
+            break;
+
         // Check if a block was hit and place a new block next to it
         case SDLK_q:
             if (!down) {
@@ -307,8 +315,8 @@ void update(float dt) {
         velocity.z += 2.0f * sin(M_PI - yaw);
     }
     if (keyW) {
-        velocity.x += 2.0f * cos(M_PI * 3 / 2 - yaw);
-        velocity.z += 2.0f * sin(M_PI * 3 / 2 - yaw);
+        velocity.x += 2.0f * cos(-M_PI / 2 - yaw);
+        velocity.z += 2.0f * sin(-M_PI / 2 - yaw);
     }
     if (keyS) {
         velocity.x += 2.0f * cos(M_PI / 2 - yaw);
@@ -319,10 +327,35 @@ void update(float dt) {
         velocity.z += 2.0f * sin(-yaw);
     }
 
+    // Simulate gravity
+    velocity.y -= 20.0f * dt;
+
+    // Handle block collision (head, lower body and feet)
+    vec3 headPos = playerPos;
+    vec3 lowerPos = playerPos; lowerPos.y -= 1.0f;
+    vec3 footPos = playerPos; footPos.y -= 1.8f;
+
+    handleCollision(headPos, &velocity);
+    handleCollision(lowerPos, &velocity);
+    handleCollision(footPos, &velocity);
+
     // Apply motion
     playerPos.x += velocity.x * dt;
     playerPos.y += velocity.y * dt;
     playerPos.z += velocity.z * dt;
+}
+
+void handleCollision(vec3 pos, vec3* velocity) {
+    // Check if new position is not inside block
+    hit info;
+    raytrace(pos, *velocity, &info);
+    
+    // If it is, create sliding motion by negating velocity based on hit normal
+    if (info.hit && info.dist < 0.1f) {
+        if (info.nx != 0) velocity->x = 0.0f;
+        if (info.ny != 0) velocity->y = 0.0f;
+        if (info.nz != 0) velocity->z = 0.0f;
+    }
 }
 
 void drawFrame(Uint32* pixels) {
@@ -377,6 +410,13 @@ void setView(float p, float y) {
 
 // Returns final color
 Uint32 raytrace(vec3 pos, vec3 dir, hit* info) {
+    // Finish early if there's no direction
+    if (dir.x == 0.0f && dir.y == 0.0f && dir.z == 0.0f) {
+        goto nohit;
+    }
+
+    vec3 start = pos;
+
     int x = (int) pos.x;
     int y = (int) pos.y;
     int z = (int) pos.z;
@@ -399,6 +439,11 @@ Uint32 raytrace(vec3 pos, vec3 dir, hit* info) {
     while (IN_WORLD(x, y, z)) {
         // Determine if block is solid
         if (getBlock(x, y, z) != BLOCK_AIR) {
+            float dx = start.x - pos.x;
+            float dy = start.y - pos.y;
+            float dz = start.z - pos.z;
+            float dist = sqrt(dx*dx + dy*dy + dz*dz);
+
             pos.x -= x;
             pos.y -= y;
             pos.z -= z;
@@ -415,6 +460,7 @@ Uint32 raytrace(vec3 pos, vec3 dir, hit* info) {
                 info->nx = nx;
                 info->ny = ny;
                 info->nz = nz;
+                info->dist = dist;
 
                 return 0;
             }
@@ -458,6 +504,7 @@ Uint32 raytrace(vec3 pos, vec3 dir, hit* info) {
         }
     }
 
+nohit:
     if (info != NULL) {
         info->hit = false;
     }
