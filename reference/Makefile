@@ -1,8 +1,14 @@
 CC = gcc
 CFLAGS = -O3 -Wall -Werror
 
-bin/mineassemble: src/mineassemble.c bin
-	$(CC) $(CFLAGS) -o bin/mineassemble src/mineassemble.c -lSDL -lm -std=c99
+bin/mineassemble: bin bin/mineassemble.o bin/textures.o
+	$(CC) $(CFLAGS) -o bin/mineassemble bin/mineassemble.o bin/textures.o -lSDL -lm
+
+bin/mineassemble.o: src/mineassemble.c
+	$(CC) $(CFLAGS) -c -o bin/mineassemble.o src/mineassemble.c -std=c99
+
+bin/textures.o: src/textures.c
+	$(CC) $(CFLAGS) -c -o bin/textures.o src/textures.c
 
 bin:
 	mkdir -p bin

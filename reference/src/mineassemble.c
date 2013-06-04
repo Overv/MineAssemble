@@ -20,6 +20,18 @@
 #define IN_WORLD(x, y, z) \
     (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && worldSZ)
 
+#define TEX_COORD(u, v) (((int) ((u) * 15.0f)) * 16 + (int) ((v) * 15.0f))
+
+#define UNLIT_COL(col) (UNLIT_RED(col) | UNLIT_GREEN(col) | UNLIT_BLUE(col))
+#define UNLIT_RED(col) ((((col & 0xff0000) >> 16) * 2 / 3) << 16)
+#define UNLIT_GREEN(col) ((((col & 0x00ff00) >> 8) * 2 / 3) << 8)
+#define UNLIT_BLUE(col) ((col & 0x0000ff) * 2 / 3)
+
+// Resources
+extern unsigned int texGrass[];
+extern unsigned int texDirt[];
+extern unsigned int texGrassSide[];
+
 // Types
 typedef struct vec3 {
     float x, y, z;
@@ -50,9 +62,10 @@ void setBlock(int x, int y, int z, Uint8 type);
 
 void drawFrame(Uint32* pixels);
 
+void setPos(float x, float y, float z);
 void setView(float yaw, float pitch);
 Uint32 raytrace(vec3 pos, vec3 dir);
-Uint32 rayColor(int x, int y, int z, int face);
+Uint32 rayColor(int x, int y, int z, vec3 coords, int face);
 void faceNormal(int face, int* x, int* y, int* z);
 vec3 rayDir(int x, int y);
 Uint32 rgb(Uint8 r, Uint8 g, Uint8 b);
@@ -146,6 +159,7 @@ void initWorld() {
     setBlock(9, 10, 4, BLOCK_DIRT);
     setBlock(9, 9, 4, BLOCK_DIRT);
     setBlock(9, 8, 4, BLOCK_DIRT);
+    setBlock(9, 12, 4, BLOCK_DIRT);
 }
 
 int getLight(int x, int z) {
@@ -179,6 +193,7 @@ void drawFrame(Uint32* pixels) {
     float x = 0;
     float y = 0;
 
+    setPos(8.0f, 10.0f, 8.0f);
     setView(0.0f, 0.0f);
 
     for (int i = 0; i < 320 * 200; i++) {
@@ -191,6 +206,12 @@ void drawFrame(Uint32* pixels) {
             y++;
         }
     }
+}
+
+void setPos(float x, float y, float z) {
+    playerPos.x = x;
+    playerPos.y = y;
+    playerPos.z = z;
 }
 
 void setView(float p, float y) {
@@ -227,7 +248,10 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
     while (IN_WORLD(x, y, z)) {
         // Determine if block is solid
         if (getBlock(x, y, z) != BLOCK_AIR) {
-            return rayColor(x, y, z, face);
+            pos.x -= x;
+            pos.y = 1.0f + y - pos.y;
+            pos.z -= z;
+            return rayColor(x, y, z, pos, face);
         }
 
         // Remaining distance inside this block given ray direction
@@ -267,18 +291,32 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
     return rgb(0, 0, 0);
 }
 
-Uint32 rayColor(int x, int y, int z, int face) {
+Uint32 rayColor(int x, int y, int z, vec3 coords, int face) {
+    // Get normal
     int nx, ny, nz;
     faceNormal(face, &nx, &ny, &nz);
+
+    // Texture lookup
+    Uint32 texColor;
+
+    if (face == FACE_LEFT || face == FACE_RIGHT) {
+        texColor = texGrassSide[TEX_COORD(coords.z, coords.y)];
+    } else if (face == FACE_TOP) {
+        texColor = texGrass[TEX_COORD(coords.x, coords.z)];
+    } else if (face == FACE_BOTTOM) {
+        texColor = texDirt[TEX_COORD(coords.x, coords.z)];
+    } else {
+        texColor = texGrassSide[TEX_COORD(coords.x, coords.y)];
+    }
 
     // Side is dark if there are higher blocks in the column faced by it
     // Left and back sides are always dark to simulate a sun angle
     if (IN_WORLD(x + nx, y, z + nz) && getLight(x + nx, z + nz) > y) {
-        return rgb(abs(nx) * 200, abs(ny) * 200, abs(nz) * 200);
+        return UNLIT_COL(texColor);
     } else if (face == FACE_LEFT || face == FACE_BACK) {
-        return rgb(abs(nx) * 200, abs(ny) * 200, abs(nz) * 200);
+        return UNLIT_COL(texColor);
     } else {
-        return rgb(abs(nx) * 255, abs(ny) * 255, abs(nz) * 255);
+        return texColor;
     }
 }
 
@@ -320,5 +358,5 @@ vec3 rayDir(int x, int y) {
 }
 
 Uint32 rgb(Uint8 r, Uint8 g, Uint8 b) {
-    return (0xFF << 24) | (r << 16) | (g << 8) | b;
+    return (0xff << 24) | (r << 16) | (g << 8) | b;
 }
