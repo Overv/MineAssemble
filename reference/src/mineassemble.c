@@ -113,6 +113,13 @@ float lastUpdate = 0.0f;
 float dPitch = 0.0f;
 float dYaw = 0.0f;
 
+bool keyA = false;
+bool keyW = false;
+bool keyS = false;
+bool keyD = false;
+
+vec3 velocity = {0, 0, 0};
+
 int main() {
     initVideo();
 
@@ -240,11 +247,18 @@ void handleInput(SDLKey key, bool down) {
     hit info;
 
     switch (key) {
+        // View
         case SDLK_UP: dPitch += down ? 1.0f : -1.0f; break;
         case SDLK_DOWN: dPitch += down ? -1.0f : 1.0f; break;
 
         case SDLK_LEFT: dYaw += down ? 1.0f : -1.0f; break;
         case SDLK_RIGHT: dYaw += down ? -1.0f : 1.0f; break;
+
+        // Movement
+        case SDLK_a: keyA = down; break;
+        case SDLK_w: keyW = down; break;
+        case SDLK_s: keyS = down; break;
+        case SDLK_d: keyD = down; break;
 
         // Check if a block was hit and place a new block next to it
         case SDLK_q:
@@ -279,10 +293,36 @@ void handleInput(SDLKey key, bool down) {
 }
 
 void update(float dt) {
-    pitch += dPitch * dt;
-    yaw += dYaw * dt;
+    // Update view
+    pitch += 1.2f * dPitch * dt;
+    yaw += 1.2f * dYaw * dt;
 
     setView(pitch, yaw);
+
+    // Set X/Z velocity depending on input
+    velocity.x = velocity.z = 0.0f;
+
+    if (keyA) {
+        velocity.x += 2.0f * cos(M_PI - yaw);
+        velocity.z += 2.0f * sin(M_PI - yaw);
+    }
+    if (keyW) {
+        velocity.x += 2.0f * cos(M_PI * 3 / 2 - yaw);
+        velocity.z += 2.0f * sin(M_PI * 3 / 2 - yaw);
+    }
+    if (keyS) {
+        velocity.x += 2.0f * cos(M_PI / 2 - yaw);
+        velocity.z += 2.0f * sin(M_PI / 2 - yaw);
+    }
+    if (keyD) {
+        velocity.x += 2.0f * cos(-yaw);
+        velocity.z += 2.0f * sin(-yaw);
+    }
+
+    // Apply motion
+    playerPos.x += velocity.x * dt;
+    playerPos.y += velocity.y * dt;
+    playerPos.z += velocity.z * dt;
 }
 
 void drawFrame(Uint32* pixels) {
