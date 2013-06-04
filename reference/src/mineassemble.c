@@ -35,6 +35,8 @@
 #define UNLIT_GREEN(col) ((GREEN(col) * 2 / 3) << 8)
 #define UNLIT_BLUE(col) (BLUE(col) * 2 / 3)
 
+#define CURTIME() (clock() / (float) CLOCKS_PER_SEC)
+
 // Resources
 extern unsigned int texGrass[];
 extern unsigned int texDirt[];
@@ -68,6 +70,8 @@ int getLight(int x, int z);
 Uint8 getBlock(int x, int y, int z);
 void setBlock(int x, int y, int z, Uint8 type);
 
+void handleInput(SDLKey key, bool down);
+void update(float dt);
 void drawFrame(Uint32* pixels);
 
 void setPos(float x, float y, float z);
@@ -95,6 +99,12 @@ float yaw = 0.0f;
 float yawC = 1.0f;
 float yawS = 0.0f;
 
+// Input
+float lastUpdate = 0.0f;
+
+float dPitch = 0.0f;
+float dYaw = 0.0f;
+
 int main() {
     initVideo();
 
@@ -115,17 +125,34 @@ void initVideo() {
 }
 
 void mainLoop() {
-    SDL_Event windowEvent;
+    SDL_Event event;
 
     int frames = 0;
     int lsec = 0;
     char titleBuf[64];
 
     while (true) {
-        while (SDL_PollEvent(&windowEvent)) {
-            if (windowEvent.type == SDL_QUIT) return;
+        // Handle input and other events
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_QUIT:
+                    return;
+
+                case SDL_KEYDOWN:
+                    handleInput(event.key.keysym.sym, true);
+                    break;
+
+                case SDL_KEYUP:
+                    handleInput(event.key.keysym.sym, false);
+                    break;
+            }
         }
 
+        // Update
+        update(CURTIME() - lastUpdate);
+        lastUpdate = CURTIME();
+
+        // Draw frame
         SDL_LockSurface(screen);
 
         drawFrame((Uint32*) screen->pixels);
@@ -160,14 +187,18 @@ void initWorld() {
     }
 
     // Add arch
-    //setBlock(11, 8, 4, BLOCK_DIRT);
-    //setBlock(11, 9, 4, BLOCK_DIRT);
+    setBlock(11, 8, 4, BLOCK_DIRT);
+    setBlock(11, 9, 4, BLOCK_DIRT);
     setBlock(11, 10, 4, BLOCK_DIRT);
     setBlock(10, 10, 4, BLOCK_DIRT);
     setBlock(9, 10, 4, BLOCK_DIRT);
     setBlock(9, 9, 4, BLOCK_DIRT);
     setBlock(9, 8, 4, BLOCK_DIRT);
     setBlock(9, 12, 4, BLOCK_DIRT);
+
+    // Initial player position
+    setPos(8.0f, 10.0f, 8.0f);
+    setView(0.0f, -0.35f);
 }
 
 int getLight(int x, int z) {
@@ -197,12 +228,28 @@ void setBlock(int x, int y, int z, Uint8 type) {
     }
 }
 
+void handleInput(SDLKey key, bool down) {
+    switch (key) {
+        case SDLK_UP: dPitch += down ? 1.0f : -1.0f; break;
+        case SDLK_DOWN: dPitch += down ? -1.0f : 1.0f; break;
+
+        case SDLK_LEFT: dYaw += down ? 1.0f : -1.0f; break;
+        case SDLK_RIGHT: dYaw += down ? -1.0f : 1.0f; break;
+
+        default: break;
+    }
+}
+
+void update(float dt) {
+    pitch += dPitch * dt;
+    yaw += dYaw * dt;
+
+    setView(pitch, yaw);
+}
+
 void drawFrame(Uint32* pixels) {
     int x = 0;
     int y = 0;
-
-    setPos(8.0f, 10.0f, 8.0f);
-    setView(0.0f, -0.35f);
 
     // Draw world
     Uint32* pixel = pixels;
