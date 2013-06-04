@@ -20,8 +20,6 @@
 #define IN_WORLD(x, y, z) \
     (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && worldSZ)
 
-#define TEX_COORD(u, v) (((int) ((u) * 15.0f)) * 16 + (int) ((v) * 15.0f))
-
 #define UNLIT_COL(col) (UNLIT_RED(col) | UNLIT_GREEN(col) | UNLIT_BLUE(col))
 #define UNLIT_RED(col) ((((col & 0xff0000) >> 16) * 2 / 3) << 16)
 #define UNLIT_GREEN(col) ((((col & 0x00ff00) >> 8) * 2 / 3) << 8)
@@ -65,8 +63,9 @@ void drawFrame(Uint32* pixels);
 void setPos(float x, float y, float z);
 void setView(float yaw, float pitch);
 Uint32 raytrace(vec3 pos, vec3 dir);
-Uint32 rayColor(int x, int y, int z, vec3 coords, int face);
+Uint32 rayColor(int x, int y, int z, int tex, int face);
 void faceNormal(int face, int* x, int* y, int* z);
+int texIndex(vec3 pos, int face);
 vec3 rayDir(int x, int y);
 Uint32 rgb(Uint8 r, Uint8 g, Uint8 b);
 
@@ -249,9 +248,12 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
         // Determine if block is solid
         if (getBlock(x, y, z) != BLOCK_AIR) {
             pos.x -= x;
-            pos.y = 1.0f + y - pos.y;
+            pos.y -= y;
             pos.z -= z;
-            return rayColor(x, y, z, pos, face);
+
+            int tex = texIndex(pos, face);
+
+            return rayColor(x, y, z, tex, face);
         }
 
         // Remaining distance inside this block given ray direction
@@ -291,22 +293,23 @@ Uint32 raytrace(vec3 pos, vec3 dir) {
     return rgb(0, 0, 0);
 }
 
-Uint32 rayColor(int x, int y, int z, vec3 coords, int face) {
+Uint32 rayColor(int x, int y, int z, int tex, int face) {
     // Get normal
     int nx, ny, nz;
     faceNormal(face, &nx, &ny, &nz);
 
+    // Block is dirt if there's another block directly on top of it
+    bool isDirt = y < worldSY - 1 && getBlock(x, y + 1, z) != BLOCK_AIR;
+
     // Texture lookup
     Uint32 texColor;
 
-    if (face == FACE_LEFT || face == FACE_RIGHT) {
-        texColor = texGrassSide[TEX_COORD(coords.z, coords.y)];
+    if (face == FACE_BOTTOM || isDirt) {
+        texColor = texDirt[tex];
     } else if (face == FACE_TOP) {
-        texColor = texGrass[TEX_COORD(coords.x, coords.z)];
-    } else if (face == FACE_BOTTOM) {
-        texColor = texDirt[TEX_COORD(coords.x, coords.z)];
+        texColor = texGrass[tex];
     } else {
-        texColor = texGrassSide[TEX_COORD(coords.x, coords.y)];
+        texColor = texGrassSide[tex];
     }
 
     // Side is dark if there are higher blocks in the column faced by it
@@ -333,6 +336,23 @@ void faceNormal(int face, int* x, int* y, int* z) {
         case FACE_BACK: *z = -1; break;
         case FACE_FRONT: *z = 1; break;
     }
+}
+
+int texIndex(vec3 pos, int face) {
+    float u = 0, v = 0;
+
+    switch (face) {
+        case FACE_LEFT: u = pos.z; v = pos.y; break;
+        case FACE_RIGHT: u = pos.z; v = pos.y; break;
+        case FACE_BOTTOM: u = pos.x; v = pos.z; break;
+        case FACE_TOP: u = pos.x; v = pos.z; break;
+        case FACE_BACK: u = pos.x; v = pos.y; break;
+        case FACE_FRONT: u = pos.x; v = pos.y; break;
+    }
+
+    v = 1.0f - v;
+
+    return ((int) (u * 15.0f)) * 16 + (int) (v * 15.0f);
 }
 
 vec3 rayDir(int x, int y) {
