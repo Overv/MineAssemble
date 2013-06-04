@@ -321,6 +321,10 @@ void setPos(float x, float y, float z) {
 
 void setView(float p, float y) {
     pitch = p;
+    
+    if (pitch > 1.57f) pitch = 1.57f;
+    else if (pitch < -1.57f) pitch = -1.57f;
+
     pitchS = sinf(pitch);
     pitchC = cosf(pitch);
 
