@@ -10,5 +10,10 @@ bin:
 test:
 	qemu-system-i386 -kernel bin/mineassemble.bin
 
+iso: mineassemble.iso
+mineassemble.iso: bin/mineassemble.bin
+	cp bin/mineassemble.bin iso/boot/mineassemble.bin
+	grub-mkrescue -o mineassemble.iso iso
+
 clean:
 	rm -rf bin

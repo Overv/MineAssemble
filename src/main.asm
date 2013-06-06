@@ -10,7 +10,7 @@ section .text
 	main:
 		; Simply flash screen blue/green
 
-		push 1000
+		push 2
 		call set_timer_frequency
 		add esp, 4
 
