@@ -4,7 +4,6 @@ global main
 
 extern set_timer_frequency, set_irq_handler, enable_irq
 extern irq1_end
-extern test
 
 section .text
 
@@ -16,8 +15,6 @@ section .text
 		call set_irq_handler
 		call enable_irq
 		add esp, 8
-
-        call test
 
     loop:
         mov ebx, [color]
