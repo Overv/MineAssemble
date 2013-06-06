@@ -4,7 +4,7 @@ global init_idt, init_pic
 
 global set_timer_frequency
 
-global set_irq_handler, clear_irq_handler
+global set_irq_handler, clear_irq_handler, enable_irq
 global irq0_end, irq1_end, irq2_end, irq3_end, irq4_end, irq5_end, irq6_end, irq7_end
 global irq8_end, irq9_end, irqA_end, irqB_end, irqC_end, irqD_end, irqE_end, irqF_end
 
@@ -124,6 +124,23 @@ section .text
 		push ecx
 		call clear_interrupt_handler
 		add esp, 4
+		ret
+
+	; Enable IRQ
+	enable_irq:
+		mov dx, 0x21
+		mov al, [esp + 4]
+		shl al, 4
+		and al, 0x80
+		add dl, al
+		mov cl, [esp + 4]
+		and cl, 111b
+		mov bl, 1
+		shl bl, cl
+		in al, dx
+		not bl
+		and al, bl
+		out dx, al
 		ret
 
 	; IRQ finishing

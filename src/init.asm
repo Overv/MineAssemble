@@ -3,7 +3,10 @@
 global start
 
 extern init_idt, init_pic
+extern init_vga
 extern main
+
+extern bss_start, bss_size
 
 	start:
 		; Run initialization code
@@ -62,6 +65,13 @@ align 4
 		; Disable interrupts
 		cli
 
+        ; Clear bss section
+        mov al, 0
+        mov edi, bss_start
+        mov ecx, bss_size
+        cld
+        rep stosb
+
 		; Initialize stack
 		mov esp, stack
 
@@ -74,6 +84,9 @@ align 4
 		call init_idt
 		call init_pic
 
+		; Switch to 0x13 VGA mode
+		call init_vga
+
 		; Enable interrupts
 		sti
 
@@ -85,7 +98,7 @@ align 4
 		cli
 		hlt
 		jmp halt
-		
+
 section .bss
 
 		; 16 kB stack

@@ -18,9 +18,11 @@ SECTIONS {
 	}
 
 	.bss : AT(phys + (bss - code)) {
+        bss_start = ABSOLUTE(.);
 		bss = .;
 		*(.bss)
 		. = ALIGN(4096);
+        bss_size = ABSOLUTE(.) - bss_start;
 	}
 
 	end =.;
