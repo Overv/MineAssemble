@@ -3,22 +3,21 @@
 global main
 
 extern set_timer_frequency, set_irq_handler, enable_irq
-extern irq0_end
+extern irq1_end
+extern test
 
 section .text
 
 	main:
-		; Simply flash screen blue/green
+		; Simply flash screen blue/green on key press
 
-		push 1000
-		call set_timer_frequency
-		add esp, 4
-
-		push dword irq0
-		push 0
+		push dword irq1
+		push 1
 		call set_irq_handler
 		call enable_irq
 		add esp, 8
+
+        call test
 
     loop:
         mov ebx, [color]
@@ -33,17 +32,22 @@ section .text
 
 		ret
 
-	irq0:
-        inc dword [cycle]
-        cmp dword [cycle], 250
+	irq1:
+    kbwait:
+        in al, 0x64
+        and al, 1
+        test al, al
+        jz kbwait
+
+        in al, 0x60
+        cmp al, 0x1c
         jnz skip
-        mov dword [cycle], 0
+
         mov eax, 3
         sub eax, [color]
         mov [color], eax
 skip:
-		jmp irq0_end
+		jmp irq1_end
 
 section .data
         color dd 2
-        cycle dd 0
