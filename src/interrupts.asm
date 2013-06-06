@@ -61,6 +61,7 @@ section .text
 		ret
 
 	; Set IRQ0 timer frequency
+    ; Must be at least 16 Hz
 	set_timer_frequency:
 		mov edx, 0
 		mov eax, 0x123456

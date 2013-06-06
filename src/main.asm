@@ -10,7 +10,7 @@ section .text
 	main:
 		; Simply flash screen blue/green
 
-		push 2
+		push 1000
 		call set_timer_frequency
 		add esp, 4
 
@@ -20,25 +20,30 @@ section .text
 		call enable_irq
 		add esp, 8
 
-        mov ecx, 2
+    loop:
+        mov ebx, [color]
 
-		jmp $
+        mov edi, 0xa0000
+        mov ah, bl
+        mov al, bl
+        mov ecx, 0x20000
+        rep stosw
+
+        jmp loop
 
 		ret
 
 	irq0:
-        mov ebx, 3
-        sub ebx, ecx
-        mov ecx, ebx
-
-        push ecx
-
-		mov edi, 0xa0000
-		mov ah, bl
-        mov al, bl
-		mov ecx, 0x20000
-		rep stosw
-
-        pop ecx
-
+        inc dword [cycle]
+        cmp dword [cycle], 250
+        jnz skip
+        mov dword [cycle], 0
+        mov eax, 3
+        sub eax, [color]
+        mov [color], eax
+skip:
 		jmp irq0_end
+
+section .data
+        color dd 2
+        cycle dd 0
