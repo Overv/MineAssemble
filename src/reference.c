@@ -11,33 +11,18 @@
 #define worldSY 16
 #define worldSZ 16
 
-#define skyColor RGB(0, 0, 32)
-
 #define hFov 90
 
 // Macros
 #define IN_WORLD(x, y, z) \
     (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && z < worldSZ)
 
-#define RGB(r, g, b) ((0xff << 24) | ((r) << 16) | ((g) << 8) | (b))
-
-#define RED(col) (((col) & 0xff0000) >> 16)
-#define GREEN(col) (((col) & 0x00ff00) >> 8)
-#define BLUE(col) ((col) & 0x0000ff)
-
-#define INV_COLOR(col) RGB(255 - RED(col), 255 - GREEN(col), 255 - BLUE(col))
-
-#define UNLIT_COL(col) (UNLIT_RED(col) | UNLIT_GREEN(col) | UNLIT_BLUE(col))
-#define UNLIT_RED(col) ((RED(col) * 2 / 3) << 16)
-#define UNLIT_GREEN(col) ((GREEN(col) * 2 / 3) << 8)
-#define UNLIT_BLUE(col) (BLUE(col) * 2 / 3)
-
 #define CURTIME() (clock() / (float) CLOCKS_PER_SEC)
 
 // Resources
-extern unsigned int texGrass[];
-extern unsigned int texDirt[];
-extern unsigned int texGrassSide[];
+extern uint8_t texGrass[];
+extern uint8_t texDirt[];
+extern uint8_t texGrassSide[];
 
 // Types
 typedef struct vec3_t {
@@ -77,8 +62,8 @@ void drawFrame(uint8_t* pixels);
 
 void setPos(float x, float y, float z);
 void setView(float yaw, float pitch);
-uint32_t raytrace(vec3 pos, vec3 dir, hit* info);
-uint32_t rayColor(int x, int y, int z, int tex, int face);
+uint8_t raytrace(vec3 pos, vec3 dir, hit* info);
+uint8_t rayColor(int x, int y, int z, int tex, int face);
 void faceNormal(int face, int* x, int* y, int* z);
 int texIndex(vec3 pos, int face);
 vec3 rayDir(int x, int y);
@@ -182,8 +167,6 @@ void setBlock(int x, int y, int z, uint8_t type) {
     }
 }
 
-#define RGB8(col) (((RED(col) / 32) << 5) | ((GREEN(col) / 64) << 3) | (BLUE(col) / 32))
-
 void drawFrame(uint8_t* pixels) {
     int x = 0;
     int y = 0;
@@ -191,7 +174,7 @@ void drawFrame(uint8_t* pixels) {
     // Draw world
     uint8_t* pixel = pixels;
     for (int i = 0; i < 320 * 200; i++) {
-        *pixel = RGB8(raytrace(playerPos, rayDir(x, y), NULL));
+        *pixel = raytrace(playerPos, rayDir(x, y), NULL);
 
         pixel++;
         x++;
@@ -235,7 +218,7 @@ void setView(float p, float y) {
 }
 
 // Returns final color
-uint32_t raytrace(vec3 pos, vec3 dir, hit* info) {
+uint8_t raytrace(vec3 pos, vec3 dir, hit* info) {
     // Finish early if there's no direction
     if (dir.x == 0.0f && dir.y == 0.0f && dir.z == 0.0f) {
         goto nohit;
@@ -335,10 +318,11 @@ nohit:
         info->hit = false;
     }
 
-    return skyColor;
+    // Sky color
+    return 0;
 }
 
-uint32_t rayColor(int x, int y, int z, int tex, int face) {
+uint8_t rayColor(int x, int y, int z, int tex, int face) {
     // Get normal
     int nx, ny, nz;
     faceNormal(face, &nx, &ny, &nz);
@@ -346,25 +330,21 @@ uint32_t rayColor(int x, int y, int z, int tex, int face) {
     // Block is dirt if there's another block directly on top of it
     bool isDirt = y < worldSY - 1 && getBlock(x, y + 1, z) != BLOCK_AIR;
 
-    // Texture lookup
-    uint32_t texColor;
-
-    if (face == FACE_BOTTOM || isDirt) {
-        texColor = texDirt[tex];
-    } else if (face == FACE_TOP) {
-        texColor = texGrass[tex];
-    } else {
-        texColor = texGrassSide[tex];
-    }
-
     // Side is dark if there are higher blocks in the column faced by it
     // Left and back sides are always dark to simulate a sun angle
     if (IN_WORLD(x + nx, y, z + nz) && getLight(x + nx, z + nz) > y) {
-        return UNLIT_COL(texColor);
+        tex += 256;
     } else if (face == FACE_BOTTOM || face == FACE_LEFT || face == FACE_BACK) {
-        return UNLIT_COL(texColor);
+        tex += 256;
+    }
+
+    // Texture lookup
+    if (face == FACE_BOTTOM || isDirt) {
+        return texDirt[tex];
+    } else if (face == FACE_TOP) {
+        return texGrass[tex];
     } else {
-        return texColor;
+        return texGrassSide[tex];
     }
 }
 
