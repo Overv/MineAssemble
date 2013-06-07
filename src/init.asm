@@ -2,7 +2,7 @@
 
 global start
 
-extern init_idt, init_pic, init_input
+extern init_idt, init_pic, init_input, init_time
 extern init_vga
 extern main
 
@@ -90,8 +90,9 @@ align 4
         ; Enable interrupts
         sti
 
-        ; Enable input handling
+        ; Enable input and time interrupt handling
         call init_input
+        call init_time
 
         ; Start game
         call main

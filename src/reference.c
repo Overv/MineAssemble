@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <time.h>
 #include <math.h>
 
 #define M_PI 3.14159265358979323846
+
+// Externals
+extern uint32_t keyCode;
+extern uint32_t time;
 
 // Configuration
 #define worldSX 16
@@ -14,6 +17,8 @@
 #define hFov 90
 
 // Key scancodes
+#define KEY_ESC 0x01
+
 #define KEY_Q 0x10
 #define KEY_E 0x12
 
@@ -32,6 +37,8 @@
 // Macros
 #define IN_WORLD(x, y, z) \
     (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && z < worldSZ)
+
+#define CURTIME() (time / 1000.0f)
 
 // Resources
 extern uint8_t texGrass[];
@@ -85,9 +92,6 @@ void faceNormal(int face, int* x, int* y, int* z);
 int texIndex(vec3 pos, int face);
 vec3 rayDir(int x, int y);
 
-// Externals
-extern uint32_t keyCode;
-
 // Globals
 uint8_t* vga = (uint8_t*) 0xa0000;
 
@@ -127,16 +131,13 @@ void mainLoop() {
         handleInput();
 
         // Update world
-        update(1.0f / 60.0f);
+        update(CURTIME() - lastUpdate);
+        lastUpdate = CURTIME();
 
         // Draw frame
         drawFrame(vga);
     }
 }
-
-//
-// Code below this line is not part of boilerplate
-//
 
 void initWorld() {
     // Make flat grass landscape
@@ -148,19 +149,9 @@ void initWorld() {
         }
     }
 
-    // Add arch
-    setBlock(11, 8, 4, BLOCK_DIRT);
-    setBlock(11, 9, 4, BLOCK_DIRT);
-    setBlock(11, 10, 4, BLOCK_DIRT);
-    setBlock(10, 10, 4, BLOCK_DIRT);
-    setBlock(9, 10, 4, BLOCK_DIRT);
-    setBlock(9, 9, 4, BLOCK_DIRT);
-    setBlock(9, 8, 4, BLOCK_DIRT);
-    setBlock(9, 12, 4, BLOCK_DIRT);
-
     // Initial player position
-    setPos(8.0f, 9.8f, 8.0f);
-    setView(0.0f, -0.35f);
+    setPos(8.0f, worldSY / 2 + 1.8f, 8.0f);
+    setView(0.0f, 0.0f);
 }
 
 int getLight(int x, int z) {
@@ -247,6 +238,10 @@ void handleInput() {
                     setBlock(info.x, info.y, info.z, BLOCK_AIR);
                 }
             }
+            break;
+
+        case KEY_ESC:
+            initWorld();
             break;
 
         default: break;

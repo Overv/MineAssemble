@@ -1,6 +1,6 @@
 [bits 32]
 
-global init_idt, init_pic, init_input
+global init_idt, init_pic, init_input, init_time
 
 global set_timer_frequency
 
@@ -8,7 +8,7 @@ global set_irq_handler, clear_irq_handler, enable_irq
 global irq0_end, irq1_end, irq2_end, irq3_end, irq4_end, irq5_end, irq6_end, irq7_end
 global irq8_end, irq9_end, irqA_end, irqB_end, irqC_end, irqD_end, irqE_end, irqF_end
 
-global keyCode
+global keyCode, time
 
 ; C input handler
 extern handleInput
@@ -96,6 +96,26 @@ section .text
         pop eax
 
         jmp irq1_end
+
+    ; Initialize timer handler
+    init_time:
+        push dword 1000
+        call set_timer_frequency
+        add esp, 4
+
+        push dword time_handler
+        push 0
+        call set_irq_handler
+        call enable_irq
+        add esp, 8
+
+        ret
+
+    ; Interrupt handler for timer (fires every ms)
+    time_handler:
+        inc dword [time]
+
+        jmp irq0_end
 
     ; Set IRQ0 timer frequency
     ; Must be at least ~18 Hz
@@ -216,3 +236,4 @@ section .text
 section .data
 
     keyCode dd 0
+    time dd 0
