@@ -3,10 +3,12 @@
 global init_vga
 global vsync
 
+global palette
+
 section .data
 
-    ; 256 color RGB palette
-    palette256  db  39, 51, 63, 29, 41, 22, 19, 27, 14, 25, 38, 17, 16, 25, 11
+    ; 256 color RGB palette (6 bits per channel)
+    palette     db  39, 51, 63, 29, 41, 22, 19, 27, 14, 25, 38, 17, 16, 25, 11
                 db  30, 40, 21, 20, 26, 14, 22, 34, 14, 14, 22, 09, 27, 40, 18
                 db  18, 26, 12, 27, 40, 19, 23, 35, 15, 15, 23, 10, 24, 37, 16
                 db  16, 24, 10, 33, 44, 24, 22, 29, 16, 35, 46, 25, 23, 30, 16
@@ -56,8 +58,8 @@ section .data
                 db  00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00
                 db  00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00
                 db  00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00
-                db  00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00
-                db  63, 00, 00
+                db  00, 00, 00, 00, 00, 00, 00, 00, 00, 36, 25, 46, 40, 47, 52
+                db  24, 12, 00
 
     ; VGA mode 0x13 register values
     mode0x13    db  0x63, 0x00, 0x03, 0x01, 0x0F, 0x00, 0x0E, 0x5F, 0x4F
@@ -79,8 +81,8 @@ section .text
         call set_regs
 
         ; Set up palette
-        mov esi, palette256
-        call set_palette256
+        mov esi, palette
+        call set_palette
 
         ; Clear screen
         mov edi, 0xa0000
@@ -161,7 +163,7 @@ section .text
         ret
 
     ; Set palette colors
-    set_palette256:
+    set_palette:
         push ax
         push cx
         push dx

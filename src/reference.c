@@ -6,6 +6,7 @@
 #define M_PI 3.14159265358979323846
 
 // Externals
+extern uint8_t palette[];
 extern uint32_t keyCode;
 extern uint32_t time;
 
@@ -83,6 +84,7 @@ void handleInput();
 void update(float dt);
 void handleCollision(vec3 pos, vec3* velocity);
 void drawFrame(uint8_t* pixels);
+uint8_t reticleColor(uint8_t col);
 
 void setPos(float x, float y, float z);
 void setView(float yaw, float pitch);
@@ -259,20 +261,20 @@ void update(float dt) {
     velocity.x = velocity.z = 0.0f;
 
     if (keyState[KEY_A]) {
-        velocity.x += 2.0f * cosf(M_PI - yaw);
-        velocity.z += 2.0f * sinf(M_PI - yaw);
+        velocity.x += 3.0f * cosf(M_PI - yaw);
+        velocity.z += 3.0f * sinf(M_PI - yaw);
     }
     if (keyState[KEY_W]) {
-        velocity.x += 2.0f * cosf(-M_PI / 2 - yaw);
-        velocity.z += 2.0f * sinf(-M_PI / 2 - yaw);
+        velocity.x += 3.0f * cosf(-M_PI / 2 - yaw);
+        velocity.z += 3.0f * sinf(-M_PI / 2 - yaw);
     }
     if (keyState[KEY_S]) {
-        velocity.x += 2.0f * cosf(M_PI / 2 - yaw);
-        velocity.z += 2.0f * sinf(M_PI / 2 - yaw);
+        velocity.x += 3.0f * cosf(M_PI / 2 - yaw);
+        velocity.z += 3.0f * sinf(M_PI / 2 - yaw);
     }
     if (keyState[KEY_D]) {
-        velocity.x += 2.0f * cosf(-yaw);
-        velocity.z += 2.0f * sinf(-yaw);
+        velocity.x += 3.0f * cosf(-yaw);
+        velocity.z += 3.0f * sinf(-yaw);
     }
 
     // Simulate gravity
@@ -316,10 +318,10 @@ void drawFrame(uint8_t* pixels) {
         *pixel = raytrace(playerPos, rayDir(x, y), NULL);
 
         // Draw red aim reticle
-        if (x > 155 && x < 165 && y == 100) {
-            *pixel = 255;
-        } else if (y > 95 && y < 105 && x == 160) {
-            *pixel = 255;
+        if (x > 157 && x < 163 && y == 100) {
+            *pixel = reticleColor(*pixel);
+        } else if (y > 97 && y < 103 && x == 160) {
+            *pixel = reticleColor(*pixel);
         }
 
         pixel++;
@@ -328,6 +330,22 @@ void drawFrame(uint8_t* pixels) {
             x = 0;
             y++;
         }
+    }
+}
+
+uint8_t reticleColor(uint8_t col) {
+    // Look up color in palette
+    uint8_t r = palette[((int) col) * 3 + 0];
+    uint8_t g = palette[((int) col) * 3 + 1];
+    uint8_t b = palette[((int) col) * 3 + 2];
+
+    // Determine if color is mostly green/brown/blue (grass/dirt/sky)
+    if (g > r && g > b) {
+        return 253;
+    } else if (r >= b && r >= g) {
+        return 254;
+    } else {
+        return 255;
     }
 }
 
