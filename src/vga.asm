@@ -1,6 +1,7 @@
 [bits 32]
 
 global init_vga
+global vsync
 
 section .data
 
@@ -56,7 +57,7 @@ section .data
                 db  00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00
                 db  00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00
                 db  00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00
-                db  00, 00, 00
+                db  63, 00, 00
 
     ; VGA mode 0x13 register values
     mode0x13    db  0x63, 0x00, 0x03, 0x01, 0x0F, 0x00, 0x0E, 0x5F, 0x4F
@@ -188,4 +189,17 @@ section .text
         pop dx
         pop cx
         pop ax
+        ret
+
+    ; Wait for vertical sync to restart
+    vsync:
+        mov dx, 0x3DA
+    vsync_1:
+        in al, dx
+        test al, 1000b
+        jnz vsync_1
+    vsync_2:
+        in al, dx
+        test al, 1000b
+        jz vsync_2
         ret

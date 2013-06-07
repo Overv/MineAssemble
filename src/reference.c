@@ -13,11 +13,25 @@
 
 #define hFov 90
 
+// Key scancodes
+#define KEY_Q 0x10
+#define KEY_E 0x12
+
+#define KEY_W 0x11
+#define KEY_A 0x1E
+#define KEY_S 0x1F
+#define KEY_D 0x20
+
+#define KEY_SPACE 0x39
+
+#define KEY_UP 0x48
+#define KEY_LEFT 0x4B
+#define KEY_RIGHT 0x4D
+#define KEY_DOWN 0x50
+
 // Macros
 #define IN_WORLD(x, y, z) \
     (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && z < worldSZ)
-
-#define CURTIME() (clock() / (float) CLOCKS_PER_SEC)
 
 // Resources
 extern uint8_t texGrass[];
@@ -58,6 +72,9 @@ int getLight(int x, int z);
 uint8_t getBlock(int x, int y, int z);
 void setBlock(int x, int y, int z, uint8_t type);
 
+void handleInput(uint32_t key, bool down);
+void update(float dt);
+void handleCollision(vec3 pos, vec3* velocity);
 void drawFrame(uint8_t* pixels);
 
 void setPos(float x, float y, float z);
@@ -106,6 +123,9 @@ void main() {
 
 void mainLoop() {
     while (true) {
+        // Update world
+        update(1.0f / 60.0f);
+
         // Draw frame
         drawFrame(vga);
     }
@@ -167,14 +187,135 @@ void setBlock(int x, int y, int z, uint8_t type) {
     }
 }
 
+// Called by IRQ1 interrupt handler from assembly
+void handleInput(uint32_t key, bool down) {
+    hit info;
+
+    switch (key) {
+        // View
+        case KEY_UP: dPitch += down ? 1.0f : -1.0f; break;
+        case KEY_DOWN: dPitch += down ? -1.0f : 1.0f; break;
+
+        case KEY_LEFT: dYaw += down ? 1.0f : -1.0f; break;
+        case KEY_RIGHT: dYaw += down ? -1.0f : 1.0f; break;
+
+        // Movement
+        case KEY_A: keyA = down; break;
+        case KEY_W: keyW = down; break;
+        case KEY_S: keyS = down; break;
+        case KEY_D: keyD = down; break;
+
+        case KEY_SPACE:
+            if (down) {
+                velocity.y += 8.0f;
+            }
+            break;
+
+        // Check if a block was hit and place a new block next to it
+        case KEY_Q:
+            if (!down) {
+                raytrace(playerPos, rayDir(160, 100), &info);
+
+                if (info.hit) {
+                    int bx = info.x + info.nx;
+                    int by = info.y + info.ny;
+                    int bz = info.z + info.nz;
+
+                    if (IN_WORLD(bx, by, bz)) {
+                        setBlock(bx, by, bz, BLOCK_DIRT);
+                    }
+                }
+            }
+            break;
+
+        // Check if a block was hit and remove it
+        case KEY_E:
+            if (!down) {
+                raytrace(playerPos, rayDir(160, 100), &info);
+
+                if (info.hit) {
+                    setBlock(info.x, info.y, info.z, BLOCK_AIR);
+                }
+            }
+            break;
+
+        default: break;
+    }
+}
+
+void update(float dt) {
+    // Update view
+    pitch += 1.2f * dPitch * dt;
+    yaw += 1.2f * dYaw * dt;
+
+    setView(pitch, yaw);
+
+    // Set X/Z velocity depending on input
+    velocity.x = velocity.z = 0.0f;
+
+    if (keyA) {
+        velocity.x += 2.0f * cosf(M_PI - yaw);
+        velocity.z += 2.0f * sinf(M_PI - yaw);
+    }
+    if (keyW) {
+        velocity.x += 2.0f * cosf(-M_PI / 2 - yaw);
+        velocity.z += 2.0f * sinf(-M_PI / 2 - yaw);
+    }
+    if (keyS) {
+        velocity.x += 2.0f * cosf(M_PI / 2 - yaw);
+        velocity.z += 2.0f * sinf(M_PI / 2 - yaw);
+    }
+    if (keyD) {
+        velocity.x += 2.0f * cosf(-yaw);
+        velocity.z += 2.0f * sinf(-yaw);
+    }
+
+    // Simulate gravity
+    velocity.y -= 20.0f * dt;
+
+    // Handle block collision (head, lower body and feet)
+    vec3 headPos = playerPos;
+    vec3 lowerPos = playerPos; lowerPos.y -= 1.0f;
+    vec3 footPos = playerPos; footPos.y -= 1.8f;
+
+    handleCollision(headPos, &velocity);
+    handleCollision(lowerPos, &velocity);
+    handleCollision(footPos, &velocity);
+
+    // Apply motion
+    playerPos.x += velocity.x * dt;
+    playerPos.y += velocity.y * dt;
+    playerPos.z += velocity.z * dt;
+}
+
+void handleCollision(vec3 pos, vec3* velocity) {
+    // Check if new position is not inside block
+    hit info;
+    raytrace(pos, *velocity, &info);
+    
+    // If it is, create sliding motion by negating velocity based on hit normal
+    if (info.hit && info.dist < 0.1f) {
+        if (info.nx != 0) velocity->x = 0.0f;
+        if (info.ny != 0) velocity->y = 0.0f;
+        if (info.nz != 0) velocity->z = 0.0f;
+    }
+}
+
 void drawFrame(uint8_t* pixels) {
     int x = 0;
     int y = 0;
 
-    // Draw world
     uint8_t* pixel = pixels;
     for (int i = 0; i < 320 * 200; i++) {
+        // Draw world
         *pixel = raytrace(playerPos, rayDir(x, y), NULL);
+
+        // Draw red aim reticle
+        if (x > 155 && x < 165 && y == 100) {
+            *pixel = 255;
+        } else if (y > 95 && y < 105 && x == 160) {
+            *pixel = 255;
+        }
 
         pixel++;
         x++;
@@ -183,18 +324,6 @@ void drawFrame(uint8_t* pixels) {
             y++;
         }
     }
-
-    // Inverse colors in the center of screen to form an aim reticle
-    /*for (x = 155; x < 165; x++) {
-        pixels[99 * 320 + x] = INV_COLOR(pixels[99 * 320 + x]);
-        pixels[100 * 320 + x] = INV_COLOR(pixels[100 * 320 + x]);
-    }
-    for (y = 95; y < 105; y++) {
-        if (y == 99 || y == 100) continue;
-
-        pixels[y * 320 + 159] = INV_COLOR(pixels[y * 320 + 159]);
-        pixels[y * 320 + 160] = INV_COLOR(pixels[y * 320 + 160]);
-    }*/
 }
 
 void setPos(float x, float y, float z) {

@@ -1,12 +1,15 @@
 [bits 32]
 
-global init_idt, init_pic
+global init_idt, init_pic, init_input
 
 global set_timer_frequency
 
 global set_irq_handler, clear_irq_handler, enable_irq
 global irq0_end, irq1_end, irq2_end, irq3_end, irq4_end, irq5_end, irq6_end, irq7_end
 global irq8_end, irq9_end, irqA_end, irqB_end, irqC_end, irqD_end, irqE_end, irqF_end
+
+; C input handler
+extern handleInput
 
 section .bss
 
@@ -59,6 +62,43 @@ section .text
         add esp, 8
 
         ret
+
+    ; Initialize input handler
+    init_input:
+        push dword input_proxy
+        push 1
+        call set_irq_handler
+        call enable_irq
+        add esp, 8
+
+        ret
+
+    ; Interrupt handler that calls C input handler
+    input_proxy:
+        ; Wait for keyboard to have scancode ready
+    kbwait:
+        in al, 0x64
+        and al, 1
+        test al, al
+        jz kbwait
+
+        ; Read scancode into eax
+        xor eax, eax
+        in al, 0x60
+
+        ; Check highest bit for up/down state
+        mov ebx, eax
+        shr ebx, 7
+        xor ebx, 1
+
+        and eax, 0x7F
+
+        push dword ebx
+        push dword eax
+        call handleInput
+        add esp, 8
+
+        jmp irq1_end
 
     ; Set IRQ0 timer frequency
     ; Must be at least ~18 Hz

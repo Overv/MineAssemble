@@ -13,7 +13,7 @@ bin/%.o: src/%.asm
 bin:
 	mkdir -p bin
 
-test:
+test: bin/mineassemble.bin
 	qemu-system-i386 -kernel bin/mineassemble.bin
 
 iso: mineassemble.iso
