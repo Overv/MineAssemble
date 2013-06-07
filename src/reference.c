@@ -72,7 +72,7 @@ int getLight(int x, int z);
 uint8_t getBlock(int x, int y, int z);
 void setBlock(int x, int y, int z, uint8_t type);
 
-void handleInput(uint32_t key, bool down);
+void handleInput();
 void update(float dt);
 void handleCollision(vec3 pos, vec3* velocity);
 void drawFrame(uint8_t* pixels);
@@ -84,6 +84,9 @@ uint8_t rayColor(int x, int y, int z, int tex, int face);
 void faceNormal(int face, int* x, int* y, int* z);
 int texIndex(vec3 pos, int face);
 vec3 rayDir(int x, int y);
+
+// Externals
+extern uint32_t keyCode;
 
 // Globals
 uint8_t* vga = (uint8_t*) 0xa0000;
@@ -108,10 +111,7 @@ float lastUpdate = 0.0f;
 float dPitch = 0.0f;
 float dYaw = 0.0f;
 
-bool keyA = false;
-bool keyW = false;
-bool keyS = false;
-bool keyD = false;
+bool keyState[128] = {0};
 
 vec3 velocity = {0, 0, 0};
 
@@ -123,6 +123,9 @@ void main() {
 
 void mainLoop() {
     while (true) {
+        // Handle any input
+        handleInput();
+
         // Update world
         update(1.0f / 60.0f);
 
@@ -187,9 +190,22 @@ void setBlock(int x, int y, int z, uint8_t type) {
     }
 }
 
-// Called by IRQ1 interrupt handler from assembly
-void handleInput(uint32_t key, bool down) {
+// IRQ1 interrupt handler sets keyCode variable for this function to read
+void handleInput() {
     hit info;
+
+    uint32_t key = keyCode & 0x7F;
+    bool down = (keyCode >> 7) == 0 ? 1 : 0;
+
+    // Ignore repeated key interrupts
+    if (down && keyState[key]) {
+        return;
+    }
+
+    keyState[key] = down;
+
+    // Reset input state
+    keyCode = 0;
 
     switch (key) {
         // View
@@ -198,12 +214,6 @@ void handleInput(uint32_t key, bool down) {
 
         case KEY_LEFT: dYaw += down ? 1.0f : -1.0f; break;
         case KEY_RIGHT: dYaw += down ? -1.0f : 1.0f; break;
-
-        // Movement
-        case KEY_A: keyA = down; break;
-        case KEY_W: keyW = down; break;
-        case KEY_S: keyS = down; break;
-        case KEY_D: keyD = down; break;
 
         case KEY_SPACE:
             if (down) {
@@ -253,19 +263,19 @@ void update(float dt) {
     // Set X/Z velocity depending on input
     velocity.x = velocity.z = 0.0f;
 
-    if (keyA) {
+    if (keyState[KEY_A]) {
         velocity.x += 2.0f * cosf(M_PI - yaw);
         velocity.z += 2.0f * sinf(M_PI - yaw);
     }
-    if (keyW) {
+    if (keyState[KEY_W]) {
         velocity.x += 2.0f * cosf(-M_PI / 2 - yaw);
         velocity.z += 2.0f * sinf(-M_PI / 2 - yaw);
     }
-    if (keyS) {
+    if (keyState[KEY_S]) {
         velocity.x += 2.0f * cosf(M_PI / 2 - yaw);
         velocity.z += 2.0f * sinf(M_PI / 2 - yaw);
     }
-    if (keyD) {
+    if (keyState[KEY_D]) {
         velocity.x += 2.0f * cosf(-yaw);
         velocity.z += 2.0f * sinf(-yaw);
     }

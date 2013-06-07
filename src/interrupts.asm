@@ -8,6 +8,8 @@ global set_irq_handler, clear_irq_handler, enable_irq
 global irq0_end, irq1_end, irq2_end, irq3_end, irq4_end, irq5_end, irq6_end, irq7_end
 global irq8_end, irq9_end, irqA_end, irqB_end, irqC_end, irqD_end, irqE_end, irqF_end
 
+global keyCode
+
 ; C input handler
 extern handleInput
 
@@ -65,7 +67,7 @@ section .text
 
     ; Initialize input handler
     init_input:
-        push dword input_proxy
+        push dword input_handler
         push 1
         call set_irq_handler
         call enable_irq
@@ -73,8 +75,10 @@ section .text
 
         ret
 
-    ; Interrupt handler that calls C input handler
-    input_proxy:
+    ; Interrupt handler for keyboard keys
+    input_handler:
+        push eax
+
         ; Wait for keyboard to have scancode ready
     kbwait:
         in al, 0x64
@@ -82,21 +86,14 @@ section .text
         test al, al
         jz kbwait
 
-        ; Read scancode into eax
+        ; Read scancode
         xor eax, eax
         in al, 0x60
 
-        ; Check highest bit for up/down state
-        mov ebx, eax
-        shr ebx, 7
-        xor ebx, 1
+        ; Store scancode for program input handler
+        mov [keyCode], eax
 
-        and eax, 0x7F
-
-        push dword ebx
-        push dword eax
-        call handleInput
-        add esp, 8
+        pop eax
 
         jmp irq1_end
 
@@ -215,3 +212,7 @@ section .text
         out 0x20, al
         pop eax,
         iret
+
+section .data
+
+    keyCode dd 0
