@@ -22,6 +22,10 @@ to be a gross underestimate, reaching about 134 lines before adding the texture
 code. Nevertheless, since this was originally part of a uni assignment, I still
 tried to finish it within the 1 week of time I had left.
 
+After completing the reference code, I wrote the kernel boilerplate code
+(setting up VGA, interrupts, etc.) and changed the reference C code to work with
+this. Then I began slowly porting everything to handwritten assembly.
+
 Usage
 -----
 

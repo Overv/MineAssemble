@@ -1,5 +1,8 @@
-bin/mineassemble.bin: bin src/link.ld bin/init.o bin/interrupts.o bin/vga.o bin/main.o
-	ld -m elf_i386 -T src/link.ld -o bin/mineassemble.bin bin/init.o bin/interrupts.o bin/vga.o bin/main.o
+bin/mineassemble.bin: bin src/link.ld bin/init.o bin/interrupts.o bin/vga.o bin/reference.o
+	ld -m elf_i386 -T src/link.ld -o bin/mineassemble.bin bin/init.o bin/interrupts.o bin/vga.o bin/reference.o
+
+bin/reference.o: src/reference.c
+	gcc -m32 -c -o bin/reference.o src/reference.c -std=c99 -ffreestanding -O3
 
 bin/%.o: src/%.asm
 	nasm -felf -o $@ $<
