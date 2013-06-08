@@ -156,7 +156,7 @@ void initWorld() {
     }
 
     // Initial player position
-    setPos(8.0f, worldSY / 2 + 1.8f, 8.0f);
+    setPos(worldSX / 2, worldSY / 2 + 1.8f, worldSZ / 2);
     setView(0.0f, 0.0f);
 }
 
