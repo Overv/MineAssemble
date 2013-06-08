@@ -17,6 +17,8 @@ extern uint32_t time;
 
 #define hFov 90
 
+#define skyColor 0x02
+
 // Key scancodes
 #define KEY_ESC 0x01
 
@@ -463,7 +465,7 @@ nohit:
     }
 
     // Sky color
-    return 0;
+    return skyColor;
 }
 
 uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face) {
