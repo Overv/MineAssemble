@@ -19,15 +19,19 @@ I started writing the reference code with the idea that if it was longer than
 150 statements (excluding boilerplate), it wouldn't be worth doing it in
 assembly. Like all estimates in the world of programming, this limit turned out
 to be a gross underestimate, reaching about 134 lines before adding the texture
-code. Nevertheless, since this was originally part of a uni assignment, I still
-tried to finish it within the 1 week of time I had left.
+code.
 
 After completing the reference code, I wrote the kernel boilerplate code
 (setting up VGA, interrupts, etc.) and changed the reference C code to work with
 this. Then I began slowly porting everything to handwritten assembly.
 
 <img src="http://i.imgur.com/j3cD4ur.png" /> 
-<img src="http://i.imgur.com/OmRT52a.png" /> 
+<img src="http://i.imgur.com/OmRT52a.png" />
+
+Since this was originally part of a uni assignment, I still tried to finish it
+within the 1 week of time I had left. This ended up being enough time to finish
+the functionality of a bootable MC clone, but there was not enough time to port
+most of it to assembly. That is still an ongoing process.
 
 Usage
 -----
