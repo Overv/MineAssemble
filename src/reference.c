@@ -520,7 +520,7 @@ int texIndex(vec3 pos, int face) {
 
     v = 1.0f - v;
 
-    return ((int) (u * 15.0f)) * 16 + (int) (v * 15.0f);
+    return ((int) (u * 16.0f)) * 16 + (int) (v * 16.0f);
 }
 
 vec3 rayDir(int x, int y) {
