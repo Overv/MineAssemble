@@ -28,6 +28,8 @@ extern uint32_t time;
 #define KEY_S 0x1F
 #define KEY_D 0x20
 
+#define KEY_L 0x26
+
 #define KEY_SPACE 0x39
 
 #define KEY_UP 0x48
@@ -90,7 +92,7 @@ uint8_t reticleColor(uint8_t col);
 void setPos(float x, float y, float z);
 void setView(float yaw, float pitch);
 uint8_t raytrace(vec3 pos, vec3 dir, hit* info);
-uint8_t rayColor(int x, int y, int z, int tex, int face);
+uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face);
 void faceNormal(int face, int* x, int* y, int* z);
 int texIndex(vec3 pos, int face);
 vec3 rayDir(int x, int y);
@@ -99,7 +101,8 @@ vec3 rayDir(int x, int y);
 uint8_t* vga = (uint8_t*) 0xa0000;
 
 uint8_t world[worldSX * worldSY * worldSZ] = {0};
-uint8_t lighting[worldSX * worldSY] = {0};
+
+vec3 sunDir = {1, 3, 1};
 
 vec3 playerPos = {8, 10, 8};
 
@@ -155,31 +158,12 @@ void initWorld() {
     setView(0.0f, 0.0f);
 }
 
-int getLight(int x, int z) {
-    return lighting[x * worldSZ + z];
-}
-
 uint8_t getBlock(int x, int y, int z) {
     return world[x * worldSY * worldSZ + y * worldSZ + z];
 }
 
 void setBlock(int x, int y, int z, uint8_t type) {
     world[x * worldSY * worldSZ + y * worldSZ + z] = type;
-
-    // Update lightmap
-    int lightIdx = x * worldSZ + z;
-
-    if (type != BLOCK_AIR && lighting[lightIdx] < y) {
-        lighting[lightIdx] = y;
-    } else if (type == BLOCK_AIR && lighting[lightIdx] <= y) {
-        y = worldSY - 1;
-
-        while (y > 0 && getBlock(x, y, z) == BLOCK_AIR) {
-            y--;
-        }
-
-        lighting[lightIdx] = y;
-    }
 }
 
 void handleInput() {
@@ -190,6 +174,7 @@ void handleInput() {
     handleKey(KEY_SPACE);
     handleKey(KEY_Q);
     handleKey(KEY_E);
+    handleKey(KEY_L);
     handleKey(KEY_ESC);
 }
 
@@ -411,9 +396,10 @@ uint8_t raytrace(vec3 pos, vec3 dir, hit* info) {
             float dz = start.z - pos.z;
             float dist = sqrtf(dx*dx + dy*dy + dz*dz);
 
-            pos.x -= x;
-            pos.y -= y;
-            pos.z -= z;
+            vec3 relPos = pos;
+            relPos.x -= x;
+            relPos.y -= y;
+            relPos.z -= z;
 
             // If hit info is requested, no color computation is done
             if (info != NULL) {
@@ -432,9 +418,9 @@ uint8_t raytrace(vec3 pos, vec3 dir, hit* info) {
                 return 0;
             }
 
-            int tex = texIndex(pos, face);
+            int tex = texIndex(relPos, face);
 
-            return rayColor(x, y, z, tex, face);
+            return rayColor(x, y, z, pos, tex, face);
         }
 
         // Remaining distance inside this block given ray direction
@@ -480,7 +466,7 @@ nohit:
     return 0;
 }
 
-uint8_t rayColor(int x, int y, int z, int tex, int face) {
+uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face) {
     // Get normal
     int nx, ny, nz;
     faceNormal(face, &nx, &ny, &nz);
@@ -488,11 +474,10 @@ uint8_t rayColor(int x, int y, int z, int tex, int face) {
     // Block is dirt if there's another block directly on top of it
     bool isDirt = y < worldSY - 1 && getBlock(x, y + 1, z) != BLOCK_AIR;
 
-    // Side is dark if there are higher blocks in the column faced by it
-    // Left and back sides are always dark to simulate a sun angle
-    if (IN_WORLD(x + nx, y, z + nz) && getLight(x + nx, z + nz) > y) {
-        tex += 256;
-    } else if (face == FACE_BOTTOM || face == FACE_LEFT || face == FACE_BACK) {
+    // This pixel is dark if something obstructs a ray from here to the sun
+    hit light;
+    raytrace(pos, sunDir, &light);
+    if (light.hit) {
         tex += 256;
     }
 
