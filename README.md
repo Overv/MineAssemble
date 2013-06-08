@@ -1,40 +1,33 @@
 MineAssemble
 ============
 
-MineAssemble is a tiny bootable Minecraft clone written in x86 assembly. I made
-it to learn about writing more complex assembly than the usual "Hello World"
-bootloader and to find out how much work it takes to create something like this
-without any handholding from a kernel or libraries.
+<img src="http://i.imgur.com/j3cD4ur.png" />&nbsp;
+<img src="http://i.imgur.com/OmRT52a.png" />
 
-The actual code is designed to be run using QEMU with the `-kernel` flag to
-allow for easy testing. The makefile also includes a target to produce an .iso
-image for a CD or DVD.
+MineAssemble is a tiny bootable Minecraft clone written partly in x86 assembly.
+I made it first and foremost because a university assignment required me to
+implement a game in assembly for a computer systems course. Because I had never
+implemented anything more complex than a "Hello World" bootloader before, I
+decided I wanted to learn about writing my own kernel code at the same time.
 
-There's also the *reference* directory, which contains C code using the
-[SDL library](http://www.libsdl.org/) for a demo with the same functionality. I
-figured that starting in assembly right away would be a bit too insane, so I
-created the reference code that I would essentially port to assembly after that.
-
-I started writing the reference code with the idea that if it was longer than
-150 statements (excluding boilerplate), it wouldn't be worth doing it in
+Starting in assembly right away would be a bit too insane, so I first wrote a
+reference implementation in C using the SDL library, which can be found in the
+*reference* directory. I started writing it with the idea that if it was longer
+than 150 statements excluding boilerplate, it wouldn't be worth doing it in
 assembly. Like all estimates in the world of programming, this limit turned out
 to be a gross underestimate, reaching about 134 lines before adding the texture
-code.
+or even the input code.
 
 After completing the reference code, I wrote the kernel boilerplate code
 (setting up VGA, interrupts, etc.) and changed the reference C code to work with
 this. Then I began slowly porting everything to handwritten assembly.
 
-<img src="http://i.imgur.com/j3cD4ur.png" /> 
-<img src="http://i.imgur.com/OmRT52a.png" />
+Unfortunately this turned out to be a lot more work than I expected, so
+currently the codebase is still mostly in C. Slowly porting everything to
+assembly is an ongoing process.
 
-Since this was originally part of a uni assignment, I still tried to finish it
-within the 1 week of time I had left. This ended up being enough time to finish
-the functionality of a bootable MC clone, but there was not enough time to port
-most of it to assembly. That is still an ongoing process.
-
-Usage
------
+How to play
+-----------
 
 ### QEMU
 
@@ -44,7 +37,8 @@ to play around with it.
 ### Virtual machine
 
 If you want to use virtualization software like VirtualBox, you can produce an
-.iso image with `make iso` and mount it.
+.iso image with `make iso` and mount it. The virtual machine doesn't need a hard
+drive and requires no more than 4 MB of RAM.
 
 You can also burn this image to a CD or DVD, but that is rather wasteful. Use
 the USB stick method to try it on real hardware unless it really isn't an option
