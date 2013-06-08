@@ -11,9 +11,9 @@ extern uint8_t keys[];
 extern uint32_t time;
 
 // Configuration
-#define worldSX 16
-#define worldSY 16
-#define worldSZ 16
+#define worldSX 32
+#define worldSY 32
+#define worldSZ 32
 
 #define hFov 90
 
