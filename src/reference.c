@@ -7,7 +7,7 @@
 
 // Externals
 extern uint8_t palette[];
-extern uint32_t keyCode;
+extern uint8_t keys[];
 extern uint32_t time;
 
 // Configuration
@@ -81,6 +81,7 @@ uint8_t getBlock(int x, int y, int z);
 void setBlock(int x, int y, int z, uint8_t type);
 
 void handleInput();
+void handleKey(uint8_t key);
 void update(float dt);
 void handleCollision(vec3 pos, vec3* velocity);
 void drawFrame(uint8_t* pixels);
@@ -116,8 +117,6 @@ float lastUpdate = 0.0f;
 
 float dPitch = 0.0f;
 float dYaw = 0.0f;
-
-bool keyState[128] = {0};
 
 vec3 velocity = {0, 0, 0};
 
@@ -183,22 +182,30 @@ void setBlock(int x, int y, int z, uint8_t type) {
     }
 }
 
-// IRQ1 interrupt handler sets keyCode variable for this function to read
 void handleInput() {
+    handleKey(KEY_UP);
+    handleKey(KEY_DOWN);
+    handleKey(KEY_LEFT);
+    handleKey(KEY_RIGHT);
+    handleKey(KEY_SPACE);
+    handleKey(KEY_Q);
+    handleKey(KEY_E);
+    handleKey(KEY_ESC);
+}
+
+// IRQ1 interrupt handler sets keys buffer for this function to read
+void handleKey(uint8_t key) {
     hit info;
 
-    uint32_t key = keyCode & 0x7F;
-    bool down = (keyCode >> 7) == 0 ? 1 : 0;
-
-    // Ignore repeated key interrupts
-    if (down && keyState[key]) {
+    // If the highest bit is not set, this key has not changed
+    if (!(keys[key] & 0x80)) {
         return;
     }
 
-    keyState[key] = down;
+    bool down = keys[key] & 1;
 
-    // Reset input state
-    keyCode = 0;
+    // Mark key state as read
+    keys[key] &= 1;
 
     switch (key) {
         // View
@@ -210,6 +217,7 @@ void handleInput() {
 
         case KEY_SPACE:
             if (down) {
+                playerPos.y += 0.1f;
                 velocity.y += 8.0f;
             }
             break;
@@ -245,8 +253,6 @@ void handleInput() {
         case KEY_ESC:
             initWorld();
             break;
-
-        default: break;
     }
 }
 
@@ -260,19 +266,19 @@ void update(float dt) {
     // Set X/Z velocity depending on input
     velocity.x = velocity.z = 0.0f;
 
-    if (keyState[KEY_A]) {
+    if (keys[KEY_A] & 1) {
         velocity.x += 3.0f * cosf(M_PI - yaw);
         velocity.z += 3.0f * sinf(M_PI - yaw);
     }
-    if (keyState[KEY_W]) {
+    if (keys[KEY_W] & 1) {
         velocity.x += 3.0f * cosf(-M_PI / 2 - yaw);
         velocity.z += 3.0f * sinf(-M_PI / 2 - yaw);
     }
-    if (keyState[KEY_S]) {
+    if (keys[KEY_S] & 1) {
         velocity.x += 3.0f * cosf(M_PI / 2 - yaw);
         velocity.z += 3.0f * sinf(M_PI / 2 - yaw);
     }
-    if (keyState[KEY_D]) {
+    if (keys[KEY_D] & 1) {
         velocity.x += 3.0f * cosf(-yaw);
         velocity.z += 3.0f * sinf(-yaw);
     }
@@ -317,7 +323,7 @@ void drawFrame(uint8_t* pixels) {
         // Draw world
         *pixel = raytrace(playerPos, rayDir(x, y), NULL);
 
-        // Draw red aim reticle
+        // Draw aim reticle
         if (x > 157 && x < 163 && y == 100) {
             *pixel = reticleColor(*pixel);
         } else if (y > 97 && y < 103 && x == 160) {

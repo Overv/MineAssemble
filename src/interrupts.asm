@@ -8,7 +8,7 @@ global set_irq_handler, clear_irq_handler, enable_irq
 global irq0_end, irq1_end, irq2_end, irq3_end, irq4_end, irq5_end, irq6_end, irq7_end
 global irq8_end, irq9_end, irqA_end, irqB_end, irqC_end, irqD_end, irqE_end, irqF_end
 
-global keyCode, time
+global keys, time
 
 ; C input handler
 extern handleInput
@@ -78,6 +78,8 @@ section .text
     ; Interrupt handler for keyboard keys
     input_handler:
         push eax
+        push ebx
+        push ecx
 
         ; Wait for keyboard to have scancode ready
     kbwait:
@@ -86,13 +88,33 @@ section .text
         test al, al
         jz kbwait
 
-        ; Read scancode
+        ; Read scancode and extract down/up state
         xor eax, eax
         in al, 0x60
 
-        ; Store scancode for program input handler
-        mov [keyCode], eax
+        mov bl, al
+        shr bl, 7
+        xor bl, 1
 
+        ; Ignore repeated key presses
+        mov cl, [keys + eax]
+        and cl, 1
+        cmp cl, 1
+        jne norepeat
+        cmp cl, bl
+        je finish
+
+    norepeat:
+        or bl, 10000000b
+
+        and al, 01111111b
+
+        ; Store scancode for program input handler
+        mov [keys + eax], bl
+
+    finish:
+        pop ecx
+        pop ebx
         pop eax
 
         jmp irq1_end
@@ -235,5 +257,9 @@ section .text
 
 section .data
 
-    keyCode dd 0
     time dd 0
+
+section .bss
+
+    ; Key status buffer (128 scancodes)
+    keys resb 0x80
