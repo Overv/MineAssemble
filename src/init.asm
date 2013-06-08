@@ -4,6 +4,7 @@ global start
 
 extern init_idt, init_pic, init_input, init_time
 extern init_vga
+extern show_splash
 extern main
 
 extern bss_start, bss_size
@@ -93,6 +94,9 @@ align 4
         ; Enable input and time interrupt handling
         call init_input
         call init_time
+
+        ; Show splash screen
+        call show_splash
 
         ; Start game
         call main
