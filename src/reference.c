@@ -70,8 +70,9 @@ enum face_t {
 };
 
 // Functions
-uint8_t getBlock(int x, int y, int z);
-void setBlock(int x, int y, int z, uint8_t type);
+extern void init_world();
+extern uint8_t get_block(int x, int y, int z);
+extern void set_block(int x, int y, int z, uint8_t type);
 
 void handleKey(uint8_t key);
 void update(float dt);
@@ -90,7 +91,7 @@ extern vec3 rayDir(int x, int y);
 // Globals
 extern uint8_t* vga;
 
-extern uint8_t* world;
+extern uint8_t world[];
 extern vec3 sunDir;
 
 extern vec3 playerPos;
@@ -100,27 +101,10 @@ extern float yaw, yawS, yawC;
 extern float lastUpdate, dPitch, dYaw;
 extern vec3 velocity;
 
-void init_world() {
-    // Make flat grass landscape
-    for (int x = 0; x < worldSX; x++) {
-        for (int y = 0; y < worldSY; y++) {
-            for (int z = 0; z < worldSZ; z++) {
-                setBlock(x, y, z, y >= worldSY / 2 ? BLOCK_AIR : BLOCK_DIRT);
-            }
-        }
-    }
-
+void init_player() {
     // Initial player position
     setPos(worldSX / 2, worldSY / 2 + 1.8f, worldSZ / 2);
     setView(0.0f, 0.0f);
-}
-
-uint8_t getBlock(int x, int y, int z) {
-    return world[x * worldSY * worldSZ + y * worldSZ + z];
-}
-
-void setBlock(int x, int y, int z, uint8_t type) {
-    world[x * worldSY * worldSZ + y * worldSZ + z] = type;
 }
 
 void handle_input() {
@@ -175,7 +159,7 @@ void handleKey(uint8_t key) {
                     int bz = info.z + info.nz;
 
                     if (IN_WORLD(bx, by, bz)) {
-                        setBlock(bx, by, bz, BLOCK_DIRT);
+                        set_block(bx, by, bz, BLOCK_DIRT);
                     }
                 }
             }
@@ -187,7 +171,7 @@ void handleKey(uint8_t key) {
                 raytrace(playerPos, rayDir(160, 100), &info);
 
                 if (info.hit) {
-                    setBlock(info.x, info.y, info.z, BLOCK_AIR);
+                    set_block(info.x, info.y, info.z, BLOCK_AIR);
                 }
             }
             break;
@@ -347,7 +331,7 @@ uint8_t raytrace(vec3 pos, vec3 dir, hit* info) {
     // Assumption is made that the camera is never outside the world
     while (IN_WORLD(x, y, z)) {
         // Determine if block is solid
-        if (getBlock(x, y, z) != BLOCK_AIR) {
+        if (get_block(x, y, z) != BLOCK_AIR) {
             float dx = start.x - pos.x;
             float dy = start.y - pos.y;
             float dz = start.z - pos.z;
@@ -429,7 +413,7 @@ uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face) {
     faceNormal(face, &nx, &ny, &nz);
 
     // Block is dirt if there's another block directly on top of it
-    bool isDirt = y < worldSY - 1 && getBlock(x, y + 1, z) != BLOCK_AIR;
+    bool isDirt = y < worldSY - 1 && get_block(x, y + 1, z) != BLOCK_AIR;
 
     // This pixel is dark if something obstructs a ray from here to the sun
     hit light;
