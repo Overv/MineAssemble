@@ -20,8 +20,6 @@
 
 global vga
 
-global width, height, aspect, naspect, half
-
 global worldSX, worldSY, worldSZ
 global sunDir
 global hFov
@@ -36,13 +34,6 @@ global dPitch, dYaw, velocity
 section .data
         ; VGA buffer address
         vga dd 0xa0000
-
-        ; Helpful constants
-        width dd 320
-        height dd 200
-        aspect dd 1.6
-        naspect dd -1.6
-        half dd 0.5
 
         ; World block dimensions
         worldSX dd WORLD_SX
