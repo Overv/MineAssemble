@@ -168,11 +168,11 @@ combination.
 License
 -------
 
-This project is licensed under the GPL v2 license.
+This project is licensed under the MIT license.
 
 Some derived work with compatible licensing is also included:
 
 - **init.asm**, **interrupts.asm** - Derived from [code by Maarten de Vries and Maurice Bos](https://github.com/m-ou-se/bootlib) (licensed under the MIT license)
-- **vga.asm** - Derived from [code by Christoffer Bubach](http://bos.asmhackers.net/docs/vga_without_bios/snippet_5/vga.php) (licensed under the GPL license)
+- **vga.asm** - Derived from [code by Christoffer Bubach](http://bos.asmhackers.net/docs/vga_without_bios/snippet_5/vga.php) (public domain)
 
 Derived work here means that the code was adapted to fit the requirements of this project.
