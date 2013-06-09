@@ -59,6 +59,47 @@ might accidentally wipe your hard drive!
 
 Now reboot your PC and boot from USB.
 
+Style conventions
+-----------------
+
+With something as low-level as assembly, you quickly risk writing unreadable
+code if you don't have proper style conventions. This project uses the following
+identifier name conventions:
+
+    WORLD_SX - C-style define, usually allowing you to configure things
+    worldSX - Non-local variable (local vars are referred to by stack offsets)
+    init_world - Subroutine (uses underscores instead of camelCase)
+    .main_loop - Local label, only used from within subroutine
+
+Variable names carry no type prefix, because it is almost always very clear what
+type a variable uses from its name or usage. Here are some examples:
+
+    float - vectors, angles, distance
+    int - time, block coordinates, block normal
+    byte - palette color, block type
+
+Directives that apply to segments of a file or the whole file, such as
+
+    [bits 32]
+    section .text
+
+have no indentation. Subroutines and local labels have one level of indentation
+and code or data within have two levels of indentation. One level of indentation
+is equal to 4 spaces.
+
+Code is commonly separated in blocks with a comment above describing what is
+done in the block. If a line requires extra explanation, a comment is placed
+after the instruction.
+
+Floating point math expressions are systematically converted from the reference
+infix expression to RPN (Reverse Polish Notation) to FPU instructions. Any
+optimizations are applied afterwards if deemed necessary. This systematic
+approach makes converting single-line C expressions to dozens of assembly
+instructions bearable and relatively error-free.
+
+Admittedly, these rules were not given a lot of thought and may be a little
+awkward, but they are at least consistently applied throughout the code base.
+
 Explanation
 -----------
 

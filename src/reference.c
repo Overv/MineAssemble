@@ -8,7 +8,6 @@
 // Externals
 extern uint8_t palette[];
 extern uint8_t keys[];
-extern uint32_t time;
 
 extern uint32_t worldSX, worldSY, worldSZ;
 
@@ -38,8 +37,6 @@ extern uint32_t worldSX, worldSY, worldSZ;
 // Macros
 #define IN_WORLD(x, y, z) \
     (x >= 0 && y >= 0 && z >= 0 && x < worldSX && y < worldSY && z < worldSZ)
-
-#define CURTIME() (time / 1000.0f)
 
 // Resources
 extern uint8_t tex_grass[];
@@ -73,18 +70,12 @@ enum face_t {
 };
 
 // Functions
-void main_loop();
-
-void init_world();
-int getLight(int x, int z);
 uint8_t getBlock(int x, int y, int z);
 void setBlock(int x, int y, int z, uint8_t type);
 
-void handle_input();
 void handleKey(uint8_t key);
 void update(float dt);
 void handleCollision(vec3 pos, vec3* velocity);
-void draw_frame();
 uint8_t reticleColor(uint8_t col);
 
 void setPos(float x, float y, float z);
