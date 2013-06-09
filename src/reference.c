@@ -46,9 +46,9 @@ extern uint32_t time;
 #define CURTIME() (time / 1000.0f)
 
 // Resources
-extern uint8_t texGrass[];
-extern uint8_t texDirt[];
-extern uint8_t texGrassSide[];
+extern uint8_t tex_grass[];
+extern uint8_t tex_dirt[];
+extern uint8_t tex_grass_side[];
 
 // Types
 typedef struct vec3_t {
@@ -485,11 +485,11 @@ uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face) {
 
     // Texture lookup
     if (face == FACE_BOTTOM || isDirt) {
-        return texDirt[tex];
+        return tex_dirt[tex];
     } else if (face == FACE_TOP) {
-        return texGrass[tex];
+        return tex_grass[tex];
     } else {
-        return texGrassSide[tex];
+        return tex_grass_side[tex];
     }
 }
 
