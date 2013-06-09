@@ -1,3 +1,7 @@
+;
+; This file contains the splash screen code and bitmap
+;
+
 [bits 32]
 
 global show_splash

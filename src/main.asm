@@ -1,50 +1,56 @@
+;
+; This file contains the game initialization and main loop code
+;
+
 [bits 32]
 
 global main
 
-extern set_timer_frequency, set_irq_handler, enable_irq
-extern irq1_end
+extern init_world, handle_input, update, draw_frame
+extern time
+
+section .data
+    msPerSecond dd 1000.0
+
+    ; Last update time in milliseconds
+    lastUpdate dd 0
 
 section .text
 
-	main:
-		; Simply flash screen blue/green on key press
+    main:
+        push ebp
+        mov ebp, esp
 
-		push dword irq1
-		push 1
-		call set_irq_handler
-		call enable_irq
-		add esp, 8
+        ; Make room for deltaTime variable
+        sub esp, 4
 
-    loop:
-        mov ebx, [color]
+        ; Initialize world array
+        call init_world
 
-        mov edi, 0xa0000
-        mov ah, bl
-        mov al, bl
-        mov ecx, 0x20000
-        rep stosw
+        ; Main loop
+    .main_loop:
+        ; Read input buffer and update motion state
+        call handle_input
 
-        jmp loop
+        ; Calculate delta time
+        ; (time - lastUpdate) / 1000
+        fild dword [time]
+        fild dword [lastUpdate]
+        fsub
+        fld dword [msPerSecond]
+        fdiv
+        fstp dword [ebp - 4]
 
-		ret
+        ; Update world state
+        push dword [ebp - 4]
+        call update
+        add esp, 4
 
-	irq1:
-    kbwait:
-        in al, 0x64
-        and al, 1
-        test al, al
-        jz kbwait
+        ; Save last update time
+        mov eax, [time]
+        mov [lastUpdate], eax
 
-        in al, 0x60
-        cmp al, 0x1c
-        jnz skip
+        ; Draw next frame
+        call draw_frame
 
-        mov eax, 3
-        sub eax, [color]
-        mov [color], eax
-skip:
-		jmp irq1_end
-
-section .data
-        color dd 2
+        jmp .main_loop

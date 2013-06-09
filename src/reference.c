@@ -10,13 +10,9 @@ extern uint8_t palette[];
 extern uint8_t keys[];
 extern uint32_t time;
 
+extern uint32_t worldSX, worldSY, worldSZ;
+
 // Configuration
-#define worldSX 32
-#define worldSY 32
-#define worldSZ 32
-
-#define hFov 90
-
 #define skyColor 0x02
 
 // Key scancodes
@@ -77,75 +73,43 @@ enum face_t {
 };
 
 // Functions
-void mainLoop();
+void main_loop();
 
-void initWorld();
+void init_world();
 int getLight(int x, int z);
 uint8_t getBlock(int x, int y, int z);
 void setBlock(int x, int y, int z, uint8_t type);
 
-void handleInput();
+void handle_input();
 void handleKey(uint8_t key);
 void update(float dt);
 void handleCollision(vec3 pos, vec3* velocity);
-void drawFrame(uint8_t* pixels);
+void draw_frame();
 uint8_t reticleColor(uint8_t col);
 
 void setPos(float x, float y, float z);
 void setView(float yaw, float pitch);
+
 uint8_t raytrace(vec3 pos, vec3 dir, hit* info);
 uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face);
 void faceNormal(int face, int* x, int* y, int* z);
 int texIndex(vec3 pos, int face);
-vec3 rayDir(int x, int y);
+extern vec3 rayDir(int x, int y);
 
 // Globals
-uint8_t* vga = (uint8_t*) 0xa0000;
+extern uint8_t* vga;
 
-uint8_t world[worldSX * worldSY * worldSZ] = {0};
+extern uint8_t* world;
+extern vec3 sunDir;
 
-vec3 sunDir = {1, 3, 1};
+extern vec3 playerPos;
+extern float pitch, pitchS, pitchC;
+extern float yaw, yawS, yawC;
 
-vec3 playerPos = {8, 10, 8};
+extern float lastUpdate, dPitch, dYaw;
+extern vec3 velocity;
 
-// The sine and cosine are the same for all pixels
-float pitch = 0.0f;
-float pitchC = 1.0f;
-float pitchS = 0.0f;
-
-float yaw = 0.0f;
-float yawC = 1.0f;
-float yawS = 0.0f;
-
-// Input
-float lastUpdate = 0.0f;
-
-float dPitch = 0.0f;
-float dYaw = 0.0f;
-
-vec3 velocity = {0, 0, 0};
-
-void main() {
-    initWorld();
-
-    mainLoop();
-}
-
-void mainLoop() {
-    while (true) {
-        // Handle any input
-        handleInput();
-
-        // Update world
-        update(CURTIME() - lastUpdate);
-        lastUpdate = CURTIME();
-
-        // Draw frame
-        drawFrame(vga);
-    }
-}
-
-void initWorld() {
+void init_world() {
     // Make flat grass landscape
     for (int x = 0; x < worldSX; x++) {
         for (int y = 0; y < worldSY; y++) {
@@ -168,7 +132,7 @@ void setBlock(int x, int y, int z, uint8_t type) {
     world[x * worldSY * worldSZ + y * worldSZ + z] = type;
 }
 
-void handleInput() {
+void handle_input() {
     handleKey(KEY_UP);
     handleKey(KEY_DOWN);
     handleKey(KEY_LEFT);
@@ -238,7 +202,7 @@ void handleKey(uint8_t key) {
             break;
 
         case KEY_ESC:
-            initWorld();
+            init_world();
             break;
     }
 }
@@ -301,11 +265,11 @@ void handleCollision(vec3 pos, vec3* velocity) {
     }
 }
 
-void drawFrame(uint8_t* pixels) {
+void draw_frame() {
     int x = 0;
     int y = 0;
 
-    uint8_t* pixel = pixels;
+    uint8_t* pixel = vga;
     for (int i = 0; i < 320 * 200; i++) {
         // Draw world
         *pixel = raytrace(playerPos, rayDir(x, y), NULL);
@@ -396,7 +360,7 @@ uint8_t raytrace(vec3 pos, vec3 dir, hit* info) {
             float dx = start.x - pos.x;
             float dy = start.y - pos.y;
             float dz = start.z - pos.z;
-            float dist = sqrtf(dx*dx + dy*dy + dz*dz);
+            float dist = dx*dx + dy*dy + dz*dz;
 
             vec3 relPos = pos;
             relPos.x -= x;
@@ -523,34 +487,4 @@ int texIndex(vec3 pos, int face) {
     v = 1.0f - v;
 
     return ((int) (u * 16.0f)) * 16 + (int) (v * 16.0f);
-}
-
-vec3 rayDir(int x, int y) {
-    static float vFov = -1, fov;
-
-    // Calculate vertical fov and fov constant from specified horizontal fov
-    if (vFov == -1) {
-        vFov = 2.0f * atanf(tanf(hFov / 720.0f * M_PI) * 320.0f / 200.0f);
-        fov = tanf(0.5f * vFov);
-    }
-
-    // This is simply a precomputed version of the actual linear
-    // transformation, which is the inverse of the common view and
-    // projection transformation used in rasterization.
-    float clipX = x / 160.0f - 1.0f;
-    float clipY = 1.0f - y / 100.0f;
-
-    vec3 d = {
-        1.6f * fov * yawC * clipX + fov * yawS * pitchS * clipY - pitchC * yawS,
-        fov * pitchC * clipY + pitchS,
-        -1.6f * fov * yawS * clipX + fov * yawC * pitchS * clipY - pitchC * yawC
-    };
-
-    // Normalize
-    float length = sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
-    d.x /= length;
-    d.y /= length;
-    d.z /= length;
-
-    return d;
 }

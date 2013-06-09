@@ -1,4 +1,6 @@
-; Texture images 16x16 palette coloured, light and dark versions)
+;
+; This file contains the texture images (16x16 palette coloured, light and dark versions)
+;
 
 global tex_grass, tex_dirt, tex_grass_side
 

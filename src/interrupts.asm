@@ -1,3 +1,7 @@
+;
+; This file contains all interrupt related setup and interaction
+;
+
 [bits 32]
 
 global init_idt, init_pic, init_input, init_time
@@ -82,11 +86,11 @@ section .text
         push ecx
 
         ; Wait for keyboard to have scancode ready
-    kbwait:
+    .kbwait:
         in al, 0x64
         and al, 1
         test al, al
-        jz kbwait
+        jz .kbwait
 
         ; Read scancode and extract down/up state
         xor eax, eax
@@ -100,11 +104,11 @@ section .text
         mov cl, [keys + eax]
         and cl, 1
         cmp cl, 1
-        jne norepeat
+        jne .norepeat
         cmp cl, bl
-        je finish
+        je .finish
 
-    norepeat:
+    .norepeat:
         or bl, 10000000b
 
         and al, 01111111b
@@ -112,7 +116,7 @@ section .text
         ; Store scancode for program input handler
         mov [keys + eax], bl
 
-    finish:
+    .finish:
         pop ecx
         pop ebx
         pop eax

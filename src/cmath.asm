@@ -1,6 +1,10 @@
+;
+; This file contains an implementation of part of the C math library
+;
+
 [bits 32]
 
-global sinf, cosf, tanf, atanf, __sqrtf_finite
+global sinf, cosf, tanf, atanf
 
 section .text
     sinf:
@@ -23,11 +27,6 @@ section .text
         fld dword [esp+4]
         fld1
         fpatan
-        ret
-
-    __sqrtf_finite:
-        fld dword [esp+4]
-        fsqrt
         ret
 
 section .data

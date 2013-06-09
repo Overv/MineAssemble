@@ -1,3 +1,7 @@
+;
+; This file contains the VGA mode 0x13 setup and color palette
+;
+
 [bits 32]
 
 global init_vga
@@ -103,7 +107,7 @@ section .text
         push dx
 
         xor cx, cx
-    next_color:
+    .next_color:
         mov dx, 0x03C8
         mov al, cl
         out dx, al
@@ -120,7 +124,7 @@ section .text
 
         inc cx
         cmp cx, 256
-        jl next_color
+        jl .next_color
 
         pop dx
         pop cx

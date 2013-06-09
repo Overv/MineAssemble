@@ -1,3 +1,7 @@
+;
+; This file contains all initialization code (VGA mode, interrupt table, etc)
+;
+
 [bits 32]
 
 global start
