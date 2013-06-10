@@ -86,7 +86,7 @@ extern void set_view(float yaw, float pitch);
 uint8_t raytrace(vec3 pos, vec3 dir, hit* info);
 uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face);
 extern void face_normal(int face, int* x, int* y, int* z);
-int texIndex(vec3 pos, int face);
+extern int tex_index(vec3 pos, int face);
 extern vec3 ray_dir(int x, int y);
 
 // Globals
@@ -322,7 +322,7 @@ uint8_t raytrace(vec3 pos, vec3 dir, hit* info) {
                 return 0;
             }
 
-            int tex = texIndex(relPos, face);
+            int tex = tex_index(relPos, face);
 
             return rayColor(x, y, z, pos, tex, face);
         }
@@ -389,21 +389,4 @@ uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face) {
     } else {
         return tex_grass_side[tex];
     }
-}
-
-int texIndex(vec3 pos, int face) {
-    float u = 0, v = 0;
-
-    switch (face) {
-        case FACE_LEFT: u = pos.z; v = pos.y; break;
-        case FACE_RIGHT: u = pos.z; v = pos.y; break;
-        case FACE_BOTTOM: u = pos.x; v = pos.z; break;
-        case FACE_TOP: u = pos.x; v = pos.z; break;
-        case FACE_BACK: u = pos.x; v = pos.y; break;
-        case FACE_FRONT: u = pos.x; v = pos.y; break;
-    }
-
-    v = 1.0f - v;
-
-    return ((int) (u * 16.0f)) * 16 + (int) (v * 16.0f);
 }

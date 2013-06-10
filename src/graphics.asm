@@ -4,7 +4,7 @@
 
 [bits 32]
 
-global ray_dir, face_normal
+global ray_dir, face_normal, tex_index
 
 extern zero
 extern hFov
@@ -17,10 +17,15 @@ section .data
         halfWidth dd 160
         height dd 200
         halfHeight dd 100
+
         aspect dd 1.6
         neg_aspect dd -1.6
+
+        texture_scale dd 16
+        texture_size dd 15
         two dd 2.0
         half dd 0.5
+
         doubleCircle dd 720.0
 
 section .text
@@ -159,7 +164,7 @@ section .text
         mov dword [eax], 0
 
         ; Jump to face
-        mov eax, [esp + 4]
+        mov eax, [esp + 4] ; face
         jmp [.face_tbl + eax * 4]
 
         ; Face jump table
@@ -182,7 +187,7 @@ section .text
         mov eax, [esp + 12] ; ny = -1
         mov dword [eax], -1
         ret
-    .face_top
+    .face_top:
         mov eax, [esp + 12] ; ny = 1
         mov dword [eax], 1
         ret
@@ -193,4 +198,58 @@ section .text
     .face_front:
         mov eax, [esp + 16] ; nz = 1
         mov dword [eax], 1
+        ret
+
+    ; Returns index into texture image (pos, face)
+    tex_index:
+        ; First jump to face to determine (u, v) texture coordinates
+        ; These variables will be pushed on the FPU stack
+        mov eax, [esp + 16] ; face
+        jmp [.face_tbl + eax * 4]
+
+        ; Face jump table
+    .face_tbl:
+        dd .face_left
+        dd .face_right
+        dd .face_bottom
+        dd .face_top
+        dd .face_back
+        dd .face_front
+    .face_left:
+    .face_right:
+        fld dword [esp + 12] ; u = pos.z
+        fld dword [esp + 8] ; v = pos.y
+        jmp .uv_selected
+    .face_bottom:
+    .face_top:
+        fld dword [esp + 4] ; u = pos.x
+        fld dword [esp + 12] ; v = pos.z
+        jmp .uv_selected
+    .face_back:
+    .face_front:
+        fld dword [esp + 4] ; u = pos.x
+        fld dword [esp + 8] ; v = pos.y
+
+    .uv_selected:
+        ; Invert v (1.0 - v)
+        fld1
+        fsubr
+
+        ; Compute final integer index
+
+        ; (int) (v * 15.0)
+        fild dword [texture_size]
+        fmul
+        fistp dword [esp - 4] ; Store in temp variable
+
+        ; (int) (u * 15.0) * 16
+        fild dword [texture_size]
+        fmul
+        fistp dword [esp - 8]
+        mov eax, [esp - 8]
+        mul dword [texture_scale]
+
+        ; Combine
+        add eax, [esp - 4]
+
         ret
