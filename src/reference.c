@@ -79,8 +79,8 @@ void update(float dt);
 void handleCollision(vec3 pos, vec3* velocity);
 uint8_t reticleColor(uint8_t col);
 
-void setPos(float x, float y, float z);
-void setView(float yaw, float pitch);
+extern void set_pos(float x, float y, float z);
+extern void set_view(float yaw, float pitch);
 
 uint8_t raytrace(vec3 pos, vec3 dir, hit* info);
 uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face);
@@ -100,12 +100,6 @@ extern float yaw, yawS, yawC;
 
 extern float lastUpdate, dPitch, dYaw;
 extern vec3 velocity;
-
-void init_player() {
-    // Initial player position
-    setPos(worldSX / 2, worldSY / 2 + 1.8f, worldSZ / 2);
-    setView(0.0f, 0.0f);
-}
 
 void handle_input() {
     handleKey(KEY_UP);
@@ -187,7 +181,7 @@ void update(float dt) {
     pitch += 1.2f * dPitch * dt;
     yaw += 1.2f * dYaw * dt;
 
-    setView(pitch, yaw);
+    set_view(pitch, yaw);
 
     // Set X/Z velocity depending on input
     velocity.x = velocity.z = 0.0f;
@@ -279,26 +273,6 @@ uint8_t reticleColor(uint8_t col) {
     } else {
         return 255;
     }
-}
-
-void setPos(float x, float y, float z) {
-    playerPos.x = x;
-    playerPos.y = y;
-    playerPos.z = z;
-}
-
-void setView(float p, float y) {
-    pitch = p;
-
-    if (pitch > 1.57f) pitch = 1.57f;
-    else if (pitch < -1.57f) pitch = -1.57f;
-
-    pitchS = sinf(pitch);
-    pitchC = cosf(pitch);
-
-    yaw = y;
-    yawS = sinf(yaw);
-    yawC = cosf(yaw);
 }
 
 // Returns final color

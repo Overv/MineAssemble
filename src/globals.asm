@@ -10,18 +10,20 @@
 
 global vga
 
-global hFov
-global world
+global zero, half_pi, nhalf_pi
 
-global playerPos
-global pitch, pitchS, pitchC
-global yaw, yawS, yawC
+global hFov
 
 global dPitch, dYaw, velocity
 
 section .data
         ; VGA buffer address
         vga dd 0xa0000
+
+        ; Helpful constants
+        zero dd 0.0
+        half_pi dd 1.57
+        nhalf_pi dd -1.57
 
         ; Horizontal field-of-view
         hFov dd HOR_FOV
@@ -30,16 +32,3 @@ section .data
         dPitch dd 0.0
         dYaw dd 0.0
         velocity dd 0.0, 0.0, 0.0
-
-section .bss
-        ; Player position (3 floats)
-        playerPos resd 3
-
-        ; Player orientation (pitch and yaw + cached sine/cosine)
-        pitch resd 1
-        pitchS resd 1
-        pitchC resd 1
-
-        yaw resd 1
-        yawS resd 1
-        yawC resd 1

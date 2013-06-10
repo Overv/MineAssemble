@@ -11,7 +11,8 @@ global init_world, set_block, get_block
 global world, worldSX, worldSY, worldSZ
 global sunDir
 
-extern init_player, setBlock
+extern init_player, set_pos, set_view
+extern zero, playerHeight
 
 section .data
 
@@ -19,7 +20,10 @@ section .data
     worldSX dd WORLD_SX
     worldSY dd WORLD_SY
     worldSZ dd WORLD_SZ
-    worldSize dd WORLD_SX * WORLD_SY * WORLD_SZ
+    
+    halfWorldSX dd WORLD_SX / 2
+    halfWorldSY dd WORLD_SY / 2
+    halfWorldSZ dd WORLD_SZ / 2
 
     ; Sun shadows
     sunDir dd SUN_DIR_X, SUN_DIR_Y, SUN_DIR_Z
@@ -54,9 +58,8 @@ section .text
     .fill_x:
     .fill_y:
     .fill_z:
-        ; Caller saved
+        ; Caller saved (only eax is used in set_block)
         push eax
-        push ecx
 
         ; Set block value
         push dword BLOCK_DIRT
@@ -66,7 +69,6 @@ section .text
         call set_block
         add esp, 16
 
-        pop ecx
         pop eax
 
         inc ecx
@@ -83,8 +85,26 @@ section .text
         cmp eax, WORLD_SX
         jne .fill_x
 
-        ; Perform player initialization
-        call init_player
+        ; Set initial player position
+        sub esp, 12
+        fild dword [halfWorldSX]
+        fstp dword [esp + 0] ; x (worldSX / 2)
+        fild dword [halfWorldSY]
+        fld dword [playerHeight]
+        fadd
+        fstp dword [esp + 4] ; y (worldSY / 2 + 1.8)
+        fild dword [halfWorldSZ]
+        fstp dword [esp + 8] ; z (worldSZ / 2)
+        call set_pos
+        add esp, 12
+
+        ; And initial view
+        sub esp, 8
+        fld dword [zero]
+        fst dword [esp + 0] ; pitch (0)
+        fstp dword [esp + 4] ; yaw (0)
+        call set_view
+        add esp, 8
 
         pop ebx
         pop edi
