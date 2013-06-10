@@ -10,7 +10,7 @@
 
 global vga
 
-global zero, half_pi, nhalf_pi
+global zero, half_pi, neg_half_pi
 
 global hFov
 
@@ -23,7 +23,7 @@ section .data
         ; Helpful constants
         zero dd 0.0
         half_pi dd 1.57
-        nhalf_pi dd -1.57
+        neg_half_pi dd -1.57
 
         ; Horizontal field-of-view
         hFov dd HOR_FOV

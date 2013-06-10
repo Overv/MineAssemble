@@ -12,7 +12,7 @@ global playerPos
 global pitch, pitchS, pitchC
 global yaw, yawS, yawC
 
-extern half_pi, nhalf_pi
+extern half_pi, neg_half_pi
 
 section .data
 
@@ -45,7 +45,7 @@ section .text
 
         ret
 
-    ; Set player view pitch and yaw
+    ; Set player view pitch and yaw (pitch, yaw)
     set_view:
         mov eax, [esp + 4]
         mov [pitch], eax ; p param -> pitch
@@ -59,10 +59,10 @@ section .text
         fstp dword [pitch]
         jmp .pitch_ok
     .pitch_not_too_big:
-        fld dword [nhalf_pi]
+        fld dword [neg_half_pi]
         fcomip
         jbe .pitch_ok ; jump if pitch > -1.57
-        fld dword [nhalf_pi]
+        fld dword [neg_half_pi]
         fstp dword [pitch]
     .pitch_ok
         fstp dword [esp - 4] ; Discard original pitch still on stack

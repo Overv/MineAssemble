@@ -74,7 +74,8 @@ extern void init_world();
 extern uint8_t get_block(int x, int y, int z);
 extern void set_block(int x, int y, int z, uint8_t type);
 
-void handleKey(uint8_t key);
+extern void handle_input();
+void handle_key(uint8_t key);
 void update(float dt);
 void handleCollision(vec3 pos, vec3* velocity);
 uint8_t reticleColor(uint8_t col);
@@ -84,9 +85,9 @@ extern void set_view(float yaw, float pitch);
 
 uint8_t raytrace(vec3 pos, vec3 dir, hit* info);
 uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face);
-void faceNormal(int face, int* x, int* y, int* z);
+extern void face_normal(int face, int* x, int* y, int* z);
 int texIndex(vec3 pos, int face);
-extern vec3 rayDir(int x, int y);
+extern vec3 ray_dir(int x, int y);
 
 // Globals
 extern uint8_t* vga;
@@ -101,20 +102,8 @@ extern float yaw, yawS, yawC;
 extern float lastUpdate, dPitch, dYaw;
 extern vec3 velocity;
 
-void handle_input() {
-    handleKey(KEY_UP);
-    handleKey(KEY_DOWN);
-    handleKey(KEY_LEFT);
-    handleKey(KEY_RIGHT);
-    handleKey(KEY_SPACE);
-    handleKey(KEY_Q);
-    handleKey(KEY_E);
-    handleKey(KEY_L);
-    handleKey(KEY_ESC);
-}
-
 // IRQ1 interrupt handler sets keys buffer for this function to read
-void handleKey(uint8_t key) {
+void handle_key(uint8_t key) {
     hit info;
 
     // If the highest bit is not set, this key has not changed
@@ -145,7 +134,7 @@ void handleKey(uint8_t key) {
         // Check if a block was hit and place a new block next to it
         case KEY_Q:
             if (!down) {
-                raytrace(playerPos, rayDir(160, 100), &info);
+                raytrace(playerPos, ray_dir(160, 100), &info);
 
                 if (info.hit) {
                     int bx = info.x + info.nx;
@@ -162,7 +151,7 @@ void handleKey(uint8_t key) {
         // Check if a block was hit and remove it
         case KEY_E:
             if (!down) {
-                raytrace(playerPos, rayDir(160, 100), &info);
+                raytrace(playerPos, ray_dir(160, 100), &info);
 
                 if (info.hit) {
                     set_block(info.x, info.y, info.z, BLOCK_AIR);
@@ -241,7 +230,7 @@ void draw_frame() {
     uint8_t* pixel = vga;
     for (int i = 0; i < 320 * 200; i++) {
         // Draw world
-        *pixel = raytrace(playerPos, rayDir(x, y), NULL);
+        *pixel = raytrace(playerPos, ray_dir(x, y), NULL);
 
         // Draw aim reticle
         if (x > 157 && x < 163 && y == 100) {
@@ -319,7 +308,7 @@ uint8_t raytrace(vec3 pos, vec3 dir, hit* info) {
             // If hit info is requested, no color computation is done
             if (info != NULL) {
                 int nx, ny, nz;
-                faceNormal(face, &nx, &ny, &nz);
+                face_normal(face, &nx, &ny, &nz);
 
                 info->hit = true;
                 info->x = x;
@@ -382,10 +371,6 @@ nohit:
 }
 
 uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face) {
-    // Get normal
-    int nx, ny, nz;
-    faceNormal(face, &nx, &ny, &nz);
-
     // Block is dirt if there's another block directly on top of it
     bool isDirt = y < worldSY - 1 && get_block(x, y + 1, z) != BLOCK_AIR;
 
@@ -403,21 +388,6 @@ uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face) {
         return tex_grass[tex];
     } else {
         return tex_grass_side[tex];
-    }
-}
-
-void faceNormal(int face, int* x, int* y, int* z) {
-    *x = 0;
-    *y = 0;
-    *z = 0;
-
-    switch (face) {
-        case FACE_LEFT: *x = -1; break;
-        case FACE_RIGHT: *x = 1; break;
-        case FACE_BOTTOM: *y = -1; break;
-        case FACE_TOP: *y = 1; break;
-        case FACE_BACK: *z = -1; break;
-        case FACE_FRONT: *z = 1; break;
     }
 }
 
