@@ -84,7 +84,7 @@ extern void set_pos(float x, float y, float z);
 extern void set_view(float yaw, float pitch);
 
 uint8_t raytrace(vec3 pos, vec3 dir, hit* info);
-uint8_t ray_color(int x, int y, int z, vec3 pos, int tex, int face);
+extern uint8_t ray_color(int x, int y, int z, vec3 pos, int tex, int face);
 extern void face_normal(int face, int* x, int* y, int* z);
 extern int tex_index(vec3 pos, int face);
 extern vec3 ray_dir(int x, int y);
@@ -368,25 +368,4 @@ nohit:
 
     // Sky color
     return skyColor;
-}
-
-uint8_t ray_color(int x, int y, int z, vec3 pos, int tex, int face) {
-    // Block is dirt if there's another block directly on top of it
-    bool isDirt = y < worldSY - 1 && get_block(x, y + 1, z) != BLOCK_AIR;
-
-    // This pixel is dark if something obstructs a ray from here to the sun
-    hit light;
-    raytrace(pos, sunDir, &light);
-    if (light.hit) {
-        tex += 256;
-    }
-
-    // Texture lookup
-    if (face == FACE_BOTTOM || isDirt) {
-        return tex_dirt[tex];
-    } else if (face == FACE_TOP) {
-        return tex_grass[tex];
-    } else {
-        return tex_grass_side[tex];
-    }
 }

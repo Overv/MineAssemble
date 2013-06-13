@@ -101,7 +101,7 @@ section .text
 
         ; And initial view
         sub esp, 8
-        fld dword [zero]
+        fldz
         fst dword [esp + 0] ; pitch (0)
         fstp dword [esp + 4] ; yaw (0)
         call set_view

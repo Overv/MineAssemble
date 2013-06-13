@@ -66,7 +66,7 @@ section .text
         jbe .pitch_ok ; jump if pitch > -1.57
         fld dword [neg_half_pi]
         fstp dword [pitch]
-    .pitch_ok
+    .pitch_ok:
         fstp dword [esp - 4] ; Discard original pitch still on stack
 
         ; Calculate pitch sin/cos

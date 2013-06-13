@@ -10,7 +10,7 @@
 
 global vga
 
-global zero, half_pi, neg_half_pi
+global half_pi, neg_half_pi
 
 global hFov
 
@@ -21,7 +21,6 @@ section .data
         vga dd 0xa0000
 
         ; Helpful constants
-        zero dd 0.0
         half_pi dd 1.57
         neg_half_pi dd -1.57
 

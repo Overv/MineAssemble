@@ -4,11 +4,17 @@
 
 [bits 32]
 
-global ray_dir, face_normal, tex_index
+%include "constants.asm"
 
-extern zero
+global ray_dir, face_normal, tex_index, ray_color
+
 extern hFov
 extern yawC, yawS, pitchC, pitchS
+
+extern get_block
+extern raytrace
+extern sunDir
+extern tex_grass, tex_dirt, tex_grass_side
 
 section .data
 
@@ -253,5 +259,90 @@ section .text
 
         ; Combine
         add eax, [esp - 4]
+
+        ret
+
+section .text
+
+    ; byte ray_color(int x, int y, int z, vec3 pos, int tex, int face)
+    ; Return color for given block and world details
+    ray_color:
+        push ebp
+        mov ebp, esp
+        push esi
+
+        ; Allocate space for hit info struct
+        sub esp, 32
+
+        ; Store texture image index
+        mov esi, [ebp + 32] ; tex
+
+        ; Do lighting ray trace and request feedback to local hit info struct
+        mov eax, ebp
+        sub eax, 32
+        push dword eax ; Pointer to hit info struct
+
+        push dword [sunDir + 8] ; Ray direction vec3 (in reverse because stack grows downwards)
+        push dword [sunDir + 4]
+        push dword [sunDir + 0]
+
+        push dword [ebp + 28] ; Ray start position vec3
+        push dword [ebp + 24]
+        push dword [ebp + 20]
+
+        call raytrace
+
+        add esp, 28
+
+        ; If light ray hit something, shift to dark texture indices
+        cmp byte [ebp - 32], 1 ; Check if bool 'hit' in struct set to 1
+        jne .not_shadow
+        add esi, 256
+    .not_shadow:
+
+        ; Texture lookup based on side
+        cmp dword [ebp + 36], FACE_BOTTOM
+        je .dirt
+        cmp dword [ebp + 36], FACE_TOP
+        je .grass
+
+        ; If this block is at the top of the world, nothing is above it
+        cmp dword [ebp + 12], WORLD_SY - 1
+        je .grass_side
+
+        ; In other cases, if there is another block above this block, sides are dirt
+        push dword [ebp + 16] ; z
+
+        mov eax, [ebp + 12]
+        add eax, 1
+        push dword eax ; y + 1
+
+        push dword [ebp + 8] ; x
+
+        call get_block
+
+        add esp, 12
+
+        cmp eax, BLOCK_DIRT
+        je .dirt
+
+        ; Grassy side texture
+    .grass_side
+        movzx eax, byte [esi + tex_grass_side]
+        jmp .finish
+
+        ; Grass texture
+    .grass:
+        movzx eax, byte [esi + tex_grass]
+        jmp .finish
+
+        ; Dirt texture
+    .dirt:
+        movzx eax, byte [esi + tex_dirt]
+
+    .finish:
+        pop esi
+        mov esp, ebp
+        pop ebp
 
         ret
