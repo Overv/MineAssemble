@@ -50,6 +50,8 @@ align 4
         dw (gdt_ptr - gdt) - 1
         dd gdt
 
+    ; void init_gdt()
+    ; Initialize GDT
     init_gdt:
         lgdt [gdt_ptr]
 

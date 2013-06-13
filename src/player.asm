@@ -34,7 +34,8 @@ section .bss
 
 section .text
 
-    ; Set player position (x, y, z)
+    ; void set_pos(float x, float y, float z)
+    ; Set player position
     set_pos:
         mov eax, [esp + 4]
         mov [playerPos + 0], eax  ; x -> playerPos.x
@@ -45,7 +46,8 @@ section .text
 
         ret
 
-    ; Set player view pitch and yaw (pitch, yaw)
+    ; void set_view(float pitch, float yaw)
+    ; Set player view pitch and yaw
     set_view:
         mov eax, [esp + 4]
         mov [pitch], eax ; p param -> pitch

@@ -36,6 +36,7 @@ section .bss
 
 section .text
     
+    ; void init_world()
     ; Initialize default world blocks (flat grass)
     init_world:
         push edi
@@ -111,6 +112,7 @@ section .text
 
         ret
 
+    ; byte get_block(int x, int y, int z)
     ; Get block value given x, y and z coordinates
     get_block:
         ; Compute index (x * worldSY * worldSZ + y * worldSZ + z)
@@ -129,6 +131,7 @@ section .text
 
         ret
 
+    ; void set_block(int x, int y, int z, byte type)
     ; Set block value given x, y, z and type parameters
     set_block:
         ; Compute index (x * worldSY * worldSZ + y * worldSZ + z)

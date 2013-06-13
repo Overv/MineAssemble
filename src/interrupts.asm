@@ -24,6 +24,7 @@ section .bss
 
 section .text
 
+    ; void init_idt()
     ; Initialize Interrupt Descriptor Table (IDT)
     idt_ptr:
         dw 0x800 - 1
@@ -33,6 +34,7 @@ section .text
         lidt [idt_ptr]
         ret
 
+    ; void init_pic()
     ; Initialize Programmable Interrupt Controllers (PIC)
     init_pic:
         mov al, 0x11 ; Init command
@@ -69,6 +71,7 @@ section .text
 
         ret
 
+    ; void init_input()
     ; Initialize input handler
     init_input:
         push dword input_handler
@@ -123,6 +126,7 @@ section .text
 
         jmp irq1_end
 
+    ; void init_time()
     ; Initialize timer handler
     init_time:
         push dword 1000
@@ -143,6 +147,7 @@ section .text
 
         jmp irq0_end
 
+    ; void set_timer_frequency(int freq)
     ; Set IRQ0 timer frequency
     ; Must be at least ~18 Hz
     set_timer_frequency:
@@ -154,6 +159,7 @@ section .text
         add esp, 4
         ret
 
+    ; void set_timer_rate(int rate)
     ; Set IRQ0 timer rate
     set_timer_rate:
         mov al, 0x34 ; Channel 0 (rate generator mode)
@@ -167,6 +173,7 @@ section .text
     spurious_interrupt_handler:
         iret
 
+    ; void set_interrupt_handler(int index, void (*handler))
     ; Create or update IDT entry
     set_interrupt_handler:
         cli
@@ -184,12 +191,14 @@ section .text
 
         ret
 
+    ; void clear_interrupt_handler(int index)
     ; Remove IDT entry
     clear_interrupt_handler:
         mov ecx, [esp + 4] ; Interrupt index
         mov word [4 + idt + ecx * 8], 0 ; Attributes (0 = Not used)
         ret
 
+    ; void set_irq_handler(int index, void (*handler))
     ; Create or update IDT entry by IRQ index
     set_irq_handler:
         mov ecx, [esp + 4] ; Index
@@ -201,6 +210,7 @@ section .text
         add esp, 8
         ret
 
+    ; void clear_irq_handler(int irqIndex)
     ; Remove IDT entry for IRQ index
     clear_irq_handler:
         mov ecx, [esp + 4]
@@ -210,6 +220,7 @@ section .text
         add esp, 4
         ret
 
+    ; void enable_irq(int index)
     ; Enable IRQ
     enable_irq:
         mov dx, 0x21

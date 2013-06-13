@@ -30,8 +30,8 @@ section .data
 
 section .text
 
-        ; Takes screen space x and y and returns ray direction
-        ; as (x, y, z) floats
+    ; vec3 rayDir(int x, int y)
+    ; Takes screen space x and y and returns ray direction
     ray_dir:
         push ebp
         mov ebp, esp
@@ -153,7 +153,8 @@ section .text
         pop ebp
         ret 4
 
-    ; Returns normal of given block face (face, *nx, *ny, *nz)
+    ; void face_normal(int face, int* nx, int* ny, int* nz)
+    ; Returns normal of given block face
     face_normal:
         ; Initialize nx, ny and nz to zero (no direction)
         mov eax, [esp + 8] ; nx
@@ -200,7 +201,8 @@ section .text
         mov dword [eax], 1
         ret
 
-    ; Returns index into texture image (pos, face)
+    ; int tex_index(vec3 pos, int face)
+    ; Returns index into texture image
     tex_index:
         ; First jump to face to determine (u, v) texture coordinates
         ; These variables will be pushed on the FPU stack

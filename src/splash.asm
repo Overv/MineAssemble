@@ -12,6 +12,7 @@ extern keys
 
 section .text
 
+    ; void show_splash()
     ; Show splash screen and wait for user to press ENTER
     show_splash:
         push ecx

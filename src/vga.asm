@@ -10,6 +10,7 @@ global palette
 
 section .text
 
+    ; void init_vga()
     ; Initialize VGA mode (0x13)
     init_vga:
         pushad
@@ -100,6 +101,7 @@ section .text
         sti
         ret
 
+    ; void set_palette()
     ; Set palette colors
     set_palette:
         push ax

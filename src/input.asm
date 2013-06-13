@@ -12,6 +12,7 @@ extern handle_key
 
 section .text
 
+    ; void handle_input()
     ; Handle input of all key events
     handle_input:
         push dword KEY_UP

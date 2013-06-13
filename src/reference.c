@@ -84,7 +84,7 @@ extern void set_pos(float x, float y, float z);
 extern void set_view(float yaw, float pitch);
 
 uint8_t raytrace(vec3 pos, vec3 dir, hit* info);
-uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face);
+uint8_t ray_color(int x, int y, int z, vec3 pos, int tex, int face);
 extern void face_normal(int face, int* x, int* y, int* z);
 extern int tex_index(vec3 pos, int face);
 extern vec3 ray_dir(int x, int y);
@@ -324,7 +324,7 @@ uint8_t raytrace(vec3 pos, vec3 dir, hit* info) {
 
             int tex = tex_index(relPos, face);
 
-            return rayColor(x, y, z, pos, tex, face);
+            return ray_color(x, y, z, pos, tex, face);
         }
 
         // Remaining distance inside this block given ray direction
@@ -370,7 +370,7 @@ nohit:
     return skyColor;
 }
 
-uint8_t rayColor(int x, int y, int z, vec3 pos, int tex, int face) {
+uint8_t ray_color(int x, int y, int z, vec3 pos, int tex, int face) {
     // Block is dirt if there's another block directly on top of it
     bool isDirt = y < worldSY - 1 && get_block(x, y + 1, z) != BLOCK_AIR;
 
