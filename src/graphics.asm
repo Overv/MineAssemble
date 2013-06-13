@@ -6,7 +6,7 @@
 
 %include "constants.asm"
 
-global ray_dir, face_normal, tex_index, ray_color
+global ray_dir, face_normal, tex_index, ray_color, reticle_color
 
 extern hFov
 extern yawC, yawS, pitchC, pitchS
@@ -14,6 +14,8 @@ extern yawC, yawS, pitchC, pitchS
 extern get_block
 extern raytrace
 extern sunDir
+
+extern palette
 extern tex_grass, tex_dirt, tex_grass_side
 
 section .data
@@ -327,7 +329,7 @@ section .text
         je .dirt
 
         ; Grassy side texture
-    .grass_side
+    .grass_side:
         movzx eax, byte [esi + tex_grass_side]
         jmp .finish
 
@@ -345,4 +347,43 @@ section .text
         mov esp, ebp
         pop ebp
 
+        ret
+
+    ; byte reticle_color(byte col)
+    ; Return semi-inverted color for given color to draw nice aim reticle
+    reticle_color:
+        push ebx
+
+        ; Palette index
+        mov eax, [esp + 8]
+
+        ; Find RGB channels of palette color
+        mov bl, [eax * 3 + palette + 0] ; R
+        mov cl, [eax * 3 + palette + 1] ; G
+        mov dl, [eax * 3 + palette + 2] ; B
+
+        ; If blue channel has the max value, it's sky
+        cmp dl, 63
+        je .sky
+
+        ; If green is more prevalent than blue, it's grass
+        cmp cl, bl
+        jg .grass
+
+    .dirt:
+        ; Return inverse color for dirt
+        mov eax, 254
+        jmp .finish
+
+    .grass:
+        ; Return inverse color for grass
+        mov eax, 253
+        jmp .finish
+
+    .sky:
+        ; Return inverse color for blue sky
+        mov eax, 255
+
+    .finish:
+        pop ebx
         ret

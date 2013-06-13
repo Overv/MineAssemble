@@ -78,11 +78,11 @@ extern void handle_input();
 void handle_key(uint8_t key);
 void update(float dt);
 void handleCollision(vec3 pos, vec3* velocity);
-uint8_t reticleColor(uint8_t col);
 
 extern void set_pos(float x, float y, float z);
 extern void set_view(float yaw, float pitch);
 
+extern uint8_t reticle_color(uint8_t col);
 uint8_t raytrace(vec3 pos, vec3 dir, hit* info);
 extern uint8_t ray_color(int x, int y, int z, vec3 pos, int tex, int face);
 extern void face_normal(int face, int* x, int* y, int* z);
@@ -234,9 +234,9 @@ void draw_frame() {
 
         // Draw aim reticle
         if (x > 157 && x < 163 && y == 100) {
-            *pixel = reticleColor(*pixel);
+            *pixel = reticle_color(*pixel);
         } else if (y > 97 && y < 103 && x == 160) {
-            *pixel = reticleColor(*pixel);
+            *pixel = reticle_color(*pixel);
         }
 
         pixel++;
@@ -245,22 +245,6 @@ void draw_frame() {
             x = 0;
             y++;
         }
-    }
-}
-
-uint8_t reticleColor(uint8_t col) {
-    // Look up color in palette
-    uint8_t r = palette[((int) col) * 3 + 0];
-    uint8_t g = palette[((int) col) * 3 + 1];
-    uint8_t b = palette[((int) col) * 3 + 2];
-
-    // Determine if color is mostly green/brown/blue (grass/dirt/sky)
-    if (g > r && g > b) {
-        return 253;
-    } else if (r >= b && r >= g) {
-        return 254;
-    } else {
-        return 255;
     }
 }
 
