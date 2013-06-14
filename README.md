@@ -10,6 +10,11 @@ implement a game in assembly for a computer systems course. Because I had never
 implemented anything more complex than a "Hello World" bootloader before, I
 decided I wanted to learn about writing my own kernel code at the same time.
 
+Note that the goal of this project was **not** to write highly efficient
+hand-optimized assembly code, but rather to have fun and write code that
+balances readability and speed. This is primarily accomplished by proper
+commenting and consistent code structuring.
+
 Starting in assembly right away would be a bit too insane, so I first wrote a
 reference implementation in C using the SDL library, which can be found in the
 *reference* directory. I started writing it with the idea that if it was longer
@@ -23,8 +28,8 @@ After completing the reference code, I wrote the kernel boilerplate code
 this. Then I began slowly porting everything to handwritten assembly.
 
 Unfortunately this turned out to be a lot more work than I expected, so
-currently the codebase is still mostly in C. Slowly porting everything to
-assembly is an ongoing process.
+currently a large fraction of the codebase is still in C. Slowly porting
+everything to assembly is an ongoing process.
 
 How to play
 -----------
@@ -96,9 +101,6 @@ infix expression to RPN (Reverse Polish Notation) to FPU instructions. Any
 optimizations are applied afterwards if deemed necessary. This systematic
 approach makes converting single-line C expressions to dozens of assembly
 instructions bearable and relatively error-free.
-
-Admittedly, these rules were not given a lot of thought and may be a little
-awkward, but they are at least consistently applied throughout the code base.
 
 Explanation
 -----------
