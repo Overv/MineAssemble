@@ -31,7 +31,9 @@ this. Then I began slowly porting everything to handwritten assembly.
 
 Unfortunately this turned out to be a lot more work than I expected, so
 currently a large fraction of the codebase is still in C. Slowly porting
-everything to assembly is an ongoing process.
+everything to assembly is an ongoing process. The code also isn't fully
+compatible with all systems yet. It seems to cause floating point exceptions on
+some setups.
 
 How to play
 -----------
