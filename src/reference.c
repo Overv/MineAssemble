@@ -77,7 +77,7 @@ extern void set_block(int x, int y, int z, uint8_t type);
 extern void handle_input();
 void handle_key(uint8_t key);
 void update(float dt);
-void handleCollision(vec3 pos, vec3* velocity);
+extern void handle_collision(vec3 pos, vec3* velocity);
 
 extern void set_pos(float x, float y, float z);
 extern void set_view(float yaw, float pitch);
@@ -200,27 +200,14 @@ void update(float dt) {
     vec3 lowerPos = playerPos; lowerPos.y -= 1.0f;
     vec3 footPos = playerPos; footPos.y -= 1.8f;
 
-    handleCollision(headPos, &velocity);
-    handleCollision(lowerPos, &velocity);
-    handleCollision(footPos, &velocity);
+    handle_collision(headPos, &velocity);
+    handle_collision(lowerPos, &velocity);
+    handle_collision(footPos, &velocity);
 
     // Apply motion
     playerPos.x += velocity.x * dt;
     playerPos.y += velocity.y * dt;
     playerPos.z += velocity.z * dt;
-}
-
-void handleCollision(vec3 pos, vec3* velocity) {
-    // Check if new position is not inside block
-    hit info;
-    raytrace(pos, *velocity, &info);
-    
-    // If it is, create sliding motion by negating velocity based on hit normal
-    if (info.hit && info.dist < 0.1f) {
-        if (info.nx != 0) velocity->x = 0.0f;
-        if (info.ny != 0) velocity->y = 0.0f;
-        if (info.nz != 0) velocity->z = 0.0f;
-    }
 }
 
 void draw_frame() {
