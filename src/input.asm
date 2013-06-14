@@ -57,7 +57,7 @@ section .text
         ; Trace ray with velocity as direction to check for collision
         mov eax, ebp
         sub eax, 32
-        push dword eax ; Pointer to hit info struct
+        push eax ; Pointer to hit info struct
 
         mov eax, [ebp + 20] ; velocity pointer
         push dword [eax + 8] ; Copy of velocity vec3 (in reverse because stack grows downwards)

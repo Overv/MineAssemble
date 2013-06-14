@@ -74,15 +74,11 @@ extern void init_world();
 extern uint8_t get_block(int x, int y, int z);
 extern void set_block(int x, int y, int z, uint8_t type);
 
-extern void handle_input();
-void handle_key(uint8_t key);
-void update(float dt);
 extern void handle_collision(vec3 pos, vec3* velocity);
 
 extern void set_pos(float x, float y, float z);
 extern void set_view(float yaw, float pitch);
 
-extern uint8_t reticle_color(uint8_t col);
 uint8_t raytrace(vec3 pos, vec3 dir, hit* info);
 extern uint8_t ray_color(int x, int y, int z, vec3 pos, int tex, int face);
 extern void face_normal(int face, int* x, int* y, int* z);
@@ -208,31 +204,6 @@ void update(float dt) {
     playerPos.x += velocity.x * dt;
     playerPos.y += velocity.y * dt;
     playerPos.z += velocity.z * dt;
-}
-
-void draw_frame() {
-    int x = 0;
-    int y = 0;
-
-    uint8_t* pixel = vga;
-    for (int i = 0; i < 320 * 200; i++) {
-        // Draw world
-        *pixel = raytrace(playerPos, ray_dir(x, y), NULL);
-
-        // Draw aim reticle
-        if (x > 157 && x < 163 && y == 100) {
-            *pixel = reticle_color(*pixel);
-        } else if (y > 97 && y < 103 && x == 160) {
-            *pixel = reticle_color(*pixel);
-        }
-
-        pixel++;
-        x++;
-        if (x == 320) {
-            x = 0;
-            y++;
-        }
-    }
 }
 
 // Returns final color

@@ -6,10 +6,13 @@
 
 %include "constants.asm"
 
-global ray_dir, face_normal, tex_index, ray_color, reticle_color
+global ray_dir, face_normal, tex_index, ray_color, reticle_color, draw_frame
+
+extern vga
 
 extern hFov
 extern yawC, yawS, pitchC, pitchS
+extern playerPos
 
 extern get_block
 extern raytrace
@@ -282,7 +285,7 @@ section .text
         ; Do lighting ray trace and request feedback to local hit info struct
         mov eax, ebp
         sub eax, 32
-        push dword eax ; Pointer to hit info struct
+        push eax ; Pointer to hit info struct
 
         push dword [sunDir + 8] ; Ray direction vec3 (in reverse because stack grows downwards)
         push dword [sunDir + 4]
@@ -317,7 +320,7 @@ section .text
 
         mov eax, [ebp + 12]
         add eax, 1
-        push dword eax ; y + 1
+        push eax ; y + 1
 
         push dword [ebp + 8] ; x
 
@@ -386,4 +389,122 @@ section .text
 
     .finish:
         pop ebx
+        ret
+
+    ; void draw_frame()
+    ; Draw a single frame to the VGA frame buffer
+    draw_frame:
+        push esi
+        push ebx
+        push ebp
+        mov ebp, esp
+
+        ; Allocate space for ray dir vec3
+        sub esp, 12
+
+        ; Initialize local variables
+        mov edi, 0 ; x
+        mov ebx, 0 ; y
+        mov ecx, [vga] ; pixel
+        mov edx, 0 ; pixel index
+
+        ; Draw a pixel
+    .pixel:
+        ; Calculate ray direction (ECX not used by ray_dir)
+        push ebx
+        push edi
+
+        mov esi, ebp
+        sub esi, 12
+        push esi ; Pointer to local vec3
+
+        call ray_dir
+
+        ; No need to pop struct pointer, done by callee
+        add esp, 8
+
+        ; Perform ray trace
+        push ecx
+        push edx
+
+        push dword 0 ; Not interested in hit info
+
+        push dword [ebp - 4] ; Copy of ray dir vec3 (in reverse because stack grows downwards)
+        push dword [ebp - 8]
+        push dword [ebp - 12]
+
+        push dword [playerPos + 8] ; Copy of playerPos vec3
+        push dword [playerPos + 4]
+        push dword [playerPos + 0]
+
+        call raytrace
+
+        add esp, 28
+
+        pop edx
+        pop ecx
+
+        ; Assign pixel color
+        mov [ecx], al
+
+        ; Draw aim reticle
+        cmp edi, 157
+        jle .vertical_reticle
+        cmp edi, 163
+        jge .vertical_reticle
+        cmp ebx, 100
+        jne .vertical_reticle
+
+        ; x > 157 && x < 163 && y == 100? Draw horizontal reticle line
+        push ecx
+        push edx
+        push eax
+        call reticle_color
+        add esp, 4
+        pop edx
+        pop ecx
+
+        mov [ecx], al
+
+        jmp .no_reticle
+    .vertical_reticle:
+        cmp ebx, 97
+        jle .no_reticle
+        cmp ebx, 103
+        jge .no_reticle
+        cmp edi, 160
+        jne .no_reticle
+
+        ; y > 97 && y < 103 && x == 160? Draw vertical reticle line
+        push ecx
+        push edx
+        push eax
+        call reticle_color
+        add esp, 4
+        pop edx
+        pop ecx
+
+        mov [ecx], al
+    .no_reticle:
+
+
+        ; Update XY coordinates
+        inc edi
+        cmp edi, 320
+        jl .next_pixel
+        mov edi, 0
+        inc ebx
+
+        ; Go to next pixel
+    .next_pixel:
+        inc ecx
+        inc edx
+        cmp edx, 320 * 200
+        jl .pixel
+
+        mov esp, ebp
+        pop ebp
+        pop ebx
+        pop esi
+
         ret
