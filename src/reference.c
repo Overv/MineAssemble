@@ -1,18 +1,19 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <math.h>
-
-#define M_PI 3.14159265358979323846
-
-// Externals
-extern uint8_t palette[];
-extern uint8_t keys[];
-
-extern uint32_t worldSX, worldSY, worldSZ;
-
 // Configuration
 #define skyColor 0x02
+
+// Types
+typedef unsigned char uint8_t;
+typedef unsigned int uint32_t;
+
+typedef unsigned int bool;
+
+// Constants
+#define M_PI 3.14159265358979323846
+
+#define NULL ((void*) 0)
+
+#define true ((bool) 1)
+#define false ((bool) 0)
 
 // Key scancodes
 #define KEY_ESC 0x01
@@ -85,6 +86,9 @@ extern void face_normal(int face, int* x, int* y, int* z);
 extern int tex_index(vec3 pos, int face);
 extern vec3 ray_dir(int x, int y);
 
+extern float sinf(float n);
+extern float cosf(float n);
+
 // Globals
 extern uint8_t* vga;
 
@@ -97,6 +101,11 @@ extern float yaw, yawS, yawC;
 
 extern float lastUpdate, dPitch, dYaw;
 extern vec3 velocity;
+
+extern uint8_t palette[];
+extern uint8_t keys[];
+
+extern uint32_t worldSX, worldSY, worldSZ;
 
 // IRQ1 interrupt handler sets keys buffer for this function to read
 void handle_key(uint8_t key) {

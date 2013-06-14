@@ -4,7 +4,7 @@
 
 [bits 32]
 
-global sinf, cosf, tanf, atanf
+global sinf, cosf
 
 section .text
     sinf:
@@ -15,18 +15,6 @@ section .text
     cosf:
         fld dword [esp+4]
         fcos
-        ret
-
-    tanf:
-        fld dword [esp+4]
-        fptan
-        fstp dword [temp]
-        ret
-
-    atanf:
-        fld dword [esp+4]
-        fld1
-        fpatan
         ret
 
 section .data

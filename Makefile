@@ -4,7 +4,7 @@ bin/mineassemble.bin: bin src/link.ld bin/init.o bin/interrupts.o bin/vga.o bin/
 	ld -m elf_i386 -T src/link.ld -o bin/mineassemble.bin bin/init.o bin/interrupts.o bin/vga.o bin/main.o bin/reference.o bin/textures.o bin/cmath.o bin/splash.o bin/world.o bin/player.o bin/input.o bin/graphics.o bin/globals.o
 
 bin/reference.o: src/reference.c
-	gcc -m32 -c -g -o bin/reference.o src/reference.c -std=c99 -ffreestanding -Ofast
+	gcc -m32 -c -g -o bin/reference.o src/reference.c -std=c99 -ffreestanding -Ofast -march=native -nostdlib -nostdinc -fno-builtin -nostartfiles -nodefaultlibs -fno-exceptions -fno-stack-protector -static -fno-pic
 
 bin/%.o: src/%.asm
 	nasm -felf -o $@ $< -isrc/
