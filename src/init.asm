@@ -80,7 +80,7 @@ align 4
         rep stosb
 
         ; Initialize stack
-        mov esp, stack
+        mov esp, stack_top
 
         ; Clear flags
         push 0
@@ -117,3 +117,4 @@ section .bss
 
         ; 16 kB stack
         stack resb 0x4000
+        stack_top:
