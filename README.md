@@ -116,10 +116,10 @@ be divided into four different components.
 
 The world is stored as an *unsigned byte* array where every block has a value of
 either `BLOCK_AIR` or `BLOCK_DIRT`. The array is stored in the BSS section and
-is initialized by the `initWorld` function. It loops over every x, y and z and
+is initialized by the `init_world` function. It loops over every x, y and z and
 creates a world where the lower half is dirt and the upper half is air.
 
-While playing, other code calls `setBlock` or `getBlock` to interact with
+While playing, other code calls `set_block` or `get_block` to interact with
 the world. These simply calculate the correct index and write to or read from
 the array.
 
@@ -134,7 +134,7 @@ Because the input handling needs to be independent of performance, an IRQ0
 interrupt handler increases a `time` variable by 1 every millisecond to keep
 track of time. This is used to compute a delta time to scale movement by.
 
-Before every frame is rendered, the `handleInput` function is called and
+Before every frame is rendered, the `handle_input` function is called and
 collects the values from the `keys` array written to by the interrupt handler.
 If the upper bit of a cell is set to `1`, then it knows that the key state has
 changed and processes it accordingly. All keys except for the movement keys
@@ -146,7 +146,7 @@ function and partly by checking the down state of the AWSD keys in this
 function. The Y velocity is decreased to simulate gravity. Then the next player
 position is determined by adding the velocity multiplied by delta time.
 
-Before the new position is assigned, the code first runs the `handleCollision`
+Before the new position is assigned, the code first runs the `handle_collision`
 function for the head, center of the body and feet. It calls the raytrace
 function from these positions with the velocity as direction to determine if
 a collision will occur if the player moves to the new position. If that is the
@@ -170,9 +170,9 @@ the ray starts in for every dimension. The shortest distance wins and the ray
 position is moved by that distance times the ray direction. This is repeated
 until the position is inside a BLOCK_DIRT or if it's out of the world. The
 final position is used to compute the side that was hit and the texture
-coordinates. The `rayColor` function is then called to let the block decide
+coordinates. The `ray_color` function is then called to let the block decide
 what color it's going to output. This function calls the `raytrace` function
-again to decide where the pixel is shadowed or not by using the `sunDir`
+again to decide whether the pixel is shadowed or not by using the `sunDir`
 direction for the ray. It prevents infinite recursion by requesting an *info*
 raytrace instead of a color raytrace. This alternative returns a struct with
 hit info instead of a color.
