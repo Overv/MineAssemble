@@ -4,17 +4,22 @@
 
 [bits 32]
 
-global sinf, cosf
+global sinf, cosf, absf
 
 section .text
     sinf:
-        fld dword [esp+4]
+        fld dword [esp + 4]
         fsin
         ret
 
     cosf:
-        fld dword [esp+4]
+        fld dword [esp + 4]
         fcos
+        ret
+
+    absf:
+        fld dword [esp + 4]
+        fabs
         ret
 
 section .data

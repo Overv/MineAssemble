@@ -141,7 +141,7 @@ changed and processes it accordingly. All keys except for the movement keys
 (AWSD) are handled here.
 
 After that, the update function is called to move the player according to the
-current velocity. This velocity is controlled partly by the `handleInput`
+current velocity. This velocity is controlled partly by the `handle_input`
 function and partly by checking the down state of the AWSD keys in this
 function. The Y velocity is decreased to simulate gravity. Then the next player
 position is determined by adding the velocity multiplied by delta time.
@@ -168,7 +168,7 @@ to go with raytracing, because:
 The raytrace algorithm computes the distance to reach the sides of the block
 the ray starts in for every dimension. The shortest distance wins and the ray
 position is moved by that distance times the ray direction. This is repeated
-until the position is inside a BLOCK_DIRT or if it's out of the world. The
+until the position is inside a `BLOCK_DIRT` or if it's out of the world. The
 final position is used to compute the side that was hit and the texture
 coordinates. The `ray_color` function is then called to let the block decide
 what color it's going to output. This function calls the `raytrace` function

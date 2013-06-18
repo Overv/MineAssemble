@@ -88,6 +88,7 @@ extern vec3 ray_dir(int x, int y);
 
 extern float sinf(float n);
 extern float cosf(float n);
+extern float absf(float n);
 
 // Globals
 extern uint8_t* vga;
@@ -168,6 +169,10 @@ void handle_key(uint8_t key) {
             init_world();
             break;
     }
+
+    // Make sure view look speed doesn't add up with low framerates
+    if (dPitch != 0.0f) dPitch /= absf(dPitch);
+    if (dYaw != 0.0f) dYaw /= absf(dYaw);
 }
 
 void update(float dt) {
