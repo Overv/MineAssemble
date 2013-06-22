@@ -10,14 +10,15 @@ override LDFLAGS+=-m elf_i386 -T src/link.ld
 
 override ASFLAGS+=-felf -isrc/
 
+OBJECTS = bin/init.o bin/interrupts.o bin/vga.o bin/main.o bin/reference.o bin/textures.o bin/cmath.o bin/splash.o bin/world.o bin/player.o bin/input.o bin/graphics.o bin/globals.o
 
 # Default build option, also allows `make clean all` (rather
 all: iso
 
 # Build flat binary
 
-bin/mineassemble.bin: bin src/link.ld bin/init.o bin/interrupts.o bin/vga.o bin/main.o bin/reference.o bin/textures.o bin/cmath.o bin/splash.o bin/world.o bin/player.o bin/input.o bin/graphics.o bin/globals.o
-	${LD} ${LDFLAGS} -o bin/mineassemble.bin bin/init.o bin/interrupts.o bin/vga.o bin/main.o bin/reference.o bin/textures.o bin/cmath.o bin/splash.o bin/world.o bin/player.o bin/input.o bin/graphics.o bin/globals.o
+bin/mineassemble.bin: bin src/link.ld ${OBJECTS}
+	${LD} ${LDFLAGS} -o bin/mineassemble.bin ${OBJECTS}
 
 bin/reference.o: src/reference.c
 	${CC} ${CFLAGS} -o bin/reference.o src/reference.c
