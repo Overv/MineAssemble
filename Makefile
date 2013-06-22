@@ -1,29 +1,49 @@
-# Build flat binary
+CC=i686-pc-elf-gcc
+LD=i686-pc-elf-ld
+ASM=nasm
 
-bin/mineassemble.bin: bin src/link.ld bin/init.o bin/interrupts.o bin/vga.o bin/main.o bin/reference.o bin/textures.o bin/cmath.o bin/splash.o bin/world.o bin/player.o bin/input.o bin/graphics.o bin/globals.o
-	ld -m elf_i386 -T src/link.ld -o bin/mineassemble.bin bin/init.o bin/interrupts.o bin/vga.o bin/main.o bin/reference.o bin/textures.o bin/cmath.o bin/splash.o bin/world.o bin/player.o bin/input.o bin/graphics.o bin/globals.o
+CFLAGS:=-std=c99 -MMD
+CFLAGS+=-m32
+CFLAGS+=-g -ggdb
+CFLAGS+=-O3 -ffast-math
+CFLAGS+=-ffreestanding -nostdlib -nostdinc -fno-builtin -nostartfiles -nodefaultlibs -fno-exceptions -fno-stack-protector -static -fno-pic
 
-bin/reference.o: src/reference.c
-	gcc -m32 -c -g -o bin/reference.o src/reference.c -std=c99 -ffreestanding -Ofast -nostdlib -nostdinc -fno-builtin -nostartfiles -nodefaultlibs -fno-exceptions -fno-stack-protector -static -fno-pic
+LDFLAGS=-m elf_i386
+LDLIBS=
 
-bin/%.o: src/%.asm
-	nasm -felf -o $@ $< -isrc/
+ASMFLAGS=-felf -isrc/
+ASMFLAGS+=-g
 
-bin:
-	mkdir -p bin
+CSRCS=$(wildcard src/*.c)
+ASMSRCS=$(wildcard src/*.asm)
+OBJS=$(CSRCS:.c=.o) $(ASMSRCS:.asm=.o)
+DEPS=$(OBJS:.o=.d)
+
+.PHONY: all clean
+
+all: mineassemble.bin mineassemble.elf
+
+# NOTE: linker script must be first dependency
+mineassemble.%: src/%.ld $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ -T $^ $(LDLIBS)
+
+%.o: %.asm
+	$(ASM) $(ASMFLAGS) -MD $(@:.o=.d) -o $@ $<
+
+-include $(DEPS)
 
 # Test in QEMU
 
-test: bin/mineassemble.bin
-	qemu-system-i386 -kernel bin/mineassemble.bin
+test: mineassemble.bin
+	qemu-system-i386 -kernel mineassemble.bin
 
 .PHONY: test
 
 # Target for producing ISO image
 
 iso: mineassemble.iso
-mineassemble.iso: bin/mineassemble.bin
-	cp bin/mineassemble.bin iso/boot/mineassemble.bin
+mineassemble.iso: mineassemble.bin
+	cp mineassemble.bin iso/boot/mineassemble.bin
 	grub-mkrescue -o mineassemble.iso iso
 
 .PHONY: iso
@@ -31,4 +51,9 @@ mineassemble.iso: bin/mineassemble.bin
 # Clean up
 
 clean:
-	rm -rf bin
+	rm -f $(OBJS)
+	rm -f $(DEPS)
+	rm -f mineassemble.bin
+	rm -f mineassemble.elf
+	rm -f mineassemble.iso
+	rm -f iso/boot/mineassemble.bin
