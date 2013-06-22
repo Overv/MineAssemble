@@ -68,6 +68,133 @@ might accidentally wipe your hard drive!
 
 Now reboot your PC and boot from USB.
 
+### Debugging with GDB and QEMU
+
+```
+qemu-system-i368 -gdb tcp::1234 -S -kernel mineassemble.elf
+i686-pc-elf-gdb mineassemble.elf
+(gdb) target remote :1234
+(gdb) continue
+```
+
+Building a cross compiler toolchain
+-----------------------------------
+
+In order to build MineAssemble, you need to have a cross compiler toolchain
+consisting of the [GNU Binutils](http://www.gnu.org/software/binutils/) and
+[GNU C Compiler](http://gcc.gnu.org/) (GCC).
+The toolchain must be built for **i686-pc-elf** target.
+For legacy reasons, GNU GCC and Binutils are configured at compile time and
+you will need to compile them from source to create a cross compiler
+toolchain.
+You will also need the NASM Assembler.
+
+In addition, you might need [QEMU](http://www.qemu.org/) for testing
+MineAssemble in an emulator and the
+[GNU Debugger](http://www.gnu.org/software/gdb/) (GDB) for debugging.
+
+### Installing prerequisites
+
+You will need to install a handful of utility libraries to build Binutils,
+GCC, QEMU and GDB.
+
+Use your operating system's equivalent for apt-get or compile from source.
+
+#### Install [libmpc](http://www.multiprecision.org/), [libgmp](http://gmplib.org/), [libmpfr](http://www.mpfr.org/) (required for binutils, gcc and gdb)
+
+```
+sudo apt-get install libmpc-dev libgmp-dev libmpfr-dev
+```
+
+#### Install [flex](http://flex.sourceforge.net/) and [bison](http://www.gnu.org/software/bison/) (required for GCC)
+
+```
+sudo apt-get install flex bison
+```
+
+#### Install [libsdl](http://www.libsdl.org) (optional front end for qemu)
+
+```
+sudo apt-get install libsdl-dev
+```
+
+#### Install [NASM](http://www.nasm.us/)
+
+NASM does not need to be configured at compile time, you can install it using your package manager.
+
+```
+sudo apt-get install nasm
+```
+
+#### Create directories for source, build files and binaries
+
+```
+mkdir ~/src                 # Source code
+mkdir ~/i686-pc-elf-build   # Temporary build files
+mkdir ~/i686-pc-elf         # Toolchain install destination
+```
+
+#### Get source code for Binutils, GCC, QEMU and GDB
+
+```
+git clone git://sourceware.org/git/binutils.git ~/src/binutils
+git clone git://gcc.gnu.org/git/gcc.git ~/src/gcc
+git clone git://git.qemu-project.org/qemu.git ~/src/qemu
+git clone git://sourceware.org/git/gdb.git ~/src/gdb
+```
+
+#### Check out latest release versions
+
+```
+cd ~/src/binutils ; git checkout binutils-2_23_1
+cd ~/src/gcc ; git checkout gcc-4_8-branch
+cd ~/src/qemu ; git checkout v1.5.0
+cd ~/src/gdb ; git checkout gdb_7_6-branch
+```
+
+#### Build binutils for target i686-pc-elf
+
+```
+mkdir ~/i686-pc-elf-build/binutils ; cd ~/i686-pc-elf-build/binutils
+~/src/binutils/configure --prefix=$HOME/i686-pc-elf --target=i686-pc-elf --disable-shared --disable-nls
+make -j 4  # parallel make for 4 cpus
+make install
+```
+
+#### Build GCC (C compiler only) for target i686-pc-elf
+
+```
+mkdir ~/i686-pc-elf-build/gcc ; cd ~/i686-pc-elf-build/gcc
+~/src/gcc/configure --prefix=$HOME/i686-pc-elf --target=i686-pc-elf --enable-languages=c --disable-shared --disable-nls
+make -j 4 all-gcc
+make install-gcc
+```
+
+#### Build qemu with i386-softmmu target (with SDL front end)
+
+```
+mkdir ~/i686-pc-elf-build/qemu ; cd ~/i686-pc-elf-build/qemu
+~/src/qemu/configure --prefix=$HOME/i686-pc-elf --target-list=i386-softmmu --enable-sdl
+make -j 4
+make install
+```
+
+#### Build GDB for i686-pc-elf target
+
+```
+mkdir ~/i686-pc-elf-build/gdb ; cd ~/i686-pc-elf-build/gdb
+~/src/gdb/configure --prefix=$HOME/i686-pc-elf --target=i686-pc-elf
+make -j 4
+make install
+```
+
+#### Add toolchain to $PATH
+
+```
+export PATH=$HOME/i686-pc-elf/bin:$PATH
+```
+
+
 Style conventions
 -----------------
 

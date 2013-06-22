@@ -1,6 +1,5 @@
-# Binaries
-
-bin/*
-**/bin/*
+*.o
+*.d
 *.iso
 *.bin
+*.elf
