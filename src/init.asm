@@ -11,7 +11,7 @@ extern init_vga
 extern show_splash
 extern main
 
-extern bss_start, bss_size
+extern bss, bss_end
 
     start:
         ; Run initialization code
@@ -74,8 +74,9 @@ align 4
 
         ; Clear bss section
         mov al, 0
-        mov edi, bss_start
-        mov ecx, bss_size
+        mov edi, bss
+        mov ecx, bss_end
+        sub ecx, edi
         cld
         rep stosb
 
