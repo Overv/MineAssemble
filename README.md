@@ -4,7 +4,7 @@ MineAssemble
 <img src="http://i.imgur.com/j3cD4ur.png" />&nbsp;
 <img src="http://i.imgur.com/OmRT52a.png" />
 
-**[Prebuilt ISO](http://dev.vertinode.nl/mineassemble.iso) - [Video](http://www.youtube.com/watch?v=HDcr5dnellM)**
+**[Prebuilt ISO](http://dev.while.io/mineassemble.iso) - [Video](http://www.youtube.com/watch?v=HDcr5dnellM)**
 
 MineAssemble is a tiny bootable Minecraft clone written partly in x86 assembly.
 I made it first and foremost because a university assignment required me to
