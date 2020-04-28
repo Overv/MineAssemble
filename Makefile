@@ -35,7 +35,7 @@ mineassemble.%: src/%.ld $(OBJS)
 # Test in QEMU
 
 test: mineassemble.bin
-	qemu-system-i386 -kernel mineassemble.bin
+	qemu-system-i386 -enable-kvm -kernel mineassemble.bin
 
 .PHONY: test
 
