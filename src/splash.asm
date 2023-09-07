@@ -4,11 +4,11 @@
 
 [bits 32]
 
+%include "constants.asm"
+
 global show_splash
 
 extern keys
-
-%define KEY_ENTER 0x1C
 
 section .text
 
