@@ -43,6 +43,7 @@
 %define KEY_D 0x20
 
 %define KEY_SPACE 0x39
+%define KEY_ENTER 0x1C
 
 %define KEY_UP 0x48
 %define KEY_LEFT 0x4B
